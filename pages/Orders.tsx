@@ -116,12 +116,12 @@ const Orders: React.FC = () => {
       
       const waMsg = `📦 *ORDER UPDATE* 📦\n\nHello *${shopName}*,\n\nYour Order *#ORD-${orderNo}* status has been updated to: *${status}* ${statusEmoji}\n\n💰 *Total Amount:* ₹${Math.round(finalTotal).toLocaleString()}\n📍 *Status:* ${status.toUpperCase()} ⏳\n\n_Thank you for choosing RCM Hardware_ 🙏`;
       
-      PermissionHandler.openNativeWhatsApp(selectedOrder.dealers?.mobile, waMsg);
+      PermissionHandler.shareImageAndText(undefined, waMsg, selectedOrder.dealers?.mobile, `Order-${orderNo}.txt`);
 
       toast.success("SYNCED ✅");
       setSelectedOrder(null);
       fetchOrders();
-    } catch (e) { toast.error("SYNC FAILED"); }
+    } catch (e) { console.error(e); toast.error("SYNC FAILED"); }
     finally { setUpdateLoading(false); }
   };
 
@@ -138,9 +138,7 @@ const Orders: React.FC = () => {
         rate: rate,
         quantity: quantity,
         amount: rate * quantity,
-        unit: selectedProduct.unit,
-        mrp: selectedVariant.mrp,
-        discount_amt: Math.max(0, selectedVariant.mrp - rate)
+        unit: selectedProduct.unit
       }]);
       if (error) throw error;
       toast.success("INJECTED");
@@ -155,6 +153,53 @@ const Orders: React.FC = () => {
   const filteredProducts = productSearch.length > 0 
     ? products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.sku.toLowerCase().includes(productSearch.toLowerCase()))
     : [];
+
+  const handleSaveNewOrder = async () => {
+    if (!selectedDealer || manualItems.length === 0) return toast.error("Dealer and items are required.");
+    setUpdateLoading(true);
+    try {
+      const subtotal = manualItems.reduce((sum, item) => sum + item.amount, 0);
+      
+      // Step 1: Create the order and get the new order ID
+      const { data: orderData, error: orderError } = await supabase.from('orders').insert([{
+        dealer_id: selectedDealer.id,
+        subtotal: subtotal,
+        final_total: subtotal, // Initially same as subtotal
+        status: 'Pending'
+      }]).select().single();
+
+      if (orderError) throw orderError;
+      if (!orderData) throw new Error("Failed to create order.");
+
+      const newOrderId = orderData.id;
+
+      // Step 2: Prepare order items with the new order ID and clean payload
+      const itemsToInsert = manualItems.map(item => ({
+        order_id: newOrderId,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        size: item.size,
+        rate: item.rate,
+        quantity: item.quantity,
+        amount: item.amount,
+        unit: item.unit
+      }));
+
+      // Step 3: Insert all items
+      const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
+      if (itemsError) throw itemsError;
+
+      toast.success("Order Authorized Successfully ✅");
+      setShowManualModal(false);
+      fetchOrders();
+
+    } catch (e: any) {
+      console.error("Order creation failed:", e);
+      toast.error(`Sync Failed: ${e.message}`);
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-white font-black text-left overflow-hidden">
@@ -225,19 +270,7 @@ const Orders: React.FC = () => {
                         </div>
                       ))}
                    </div>
-                   <button onClick={async () => {
-                     if (manualItems.length === 0) return toast.error("EMPTY");
-                     setUpdateLoading(true);
-                     try {
-                        const sub = manualItems.reduce((s, i) => s + i.amount, 0);
-                        const { data, error } = await supabase.from('orders').insert([{ dealer_id: selectedDealer.id, subtotal: sub, transport_charges: 0, discount: 0, final_total: sub, status: 'Pending' }]).select().single();
-                        if (error) throw error;
-                        await supabase.from('order_items').insert(manualItems.map(i => ({ ...i, order_id: data.id, mrp: i.rate, discount_amt: 0 })));
-                        toast.success("AUTHORIZED ✅");
-                        setShowManualModal(false);
-                        fetchOrders();
-                     } catch (e) { toast.error("FAIL"); } finally { setUpdateLoading(false); }
-                   }} className="w-full py-8 bg-blue-600 text-white rounded-[2.2rem] font-black uppercase italic shadow-2xl active:scale-95 flex items-center justify-center gap-3 text-sm tracking-widest mt-4">
+                   <button onClick={handleSaveNewOrder} disabled={updateLoading} className="w-full py-8 bg-blue-600 text-white rounded-[2.2rem] font-black uppercase italic shadow-2xl active:scale-95 flex items-center justify-center gap-3 text-sm tracking-widest mt-4">
                      {updateLoading ? <Loader2 className="animate-spin"/> : <ShoppingCart size={24}/>} AUTHORIZE REGISTRY
                    </button>
                 </div>

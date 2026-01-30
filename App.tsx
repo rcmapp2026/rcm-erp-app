@@ -5,7 +5,7 @@ import {
   Hexagon, Menu, X, LayoutDashboard, BookOpen, Package, 
   Send, BarChart3, Users, Tags, Building2, ListOrdered, 
   UserCircle, Loader2, AlarmClock, 
-  Lock, ArrowRight, User, CheckCircle2, Gift, ShoppingCart, Save
+  Lock, ArrowRight, User, CheckCircle2, Gift, ShoppingCart, Save, KeyRound, AtSign
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { PermissionHandler } from './PermissionHandler';
@@ -46,38 +46,34 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center z-[9999] bg-white w-full h-full overflow-hidden">
       <style>{`
-        @keyframes rotate-in {
-          from {
-            transform: rotateY(90deg) scale(0.8);
+        @keyframes pulse-in {
+          0% {
+            transform: scale(0.9) rotateX(20deg);
             opacity: 0;
           }
-          to {
-            transform: rotateY(0deg) scale(1);
+          50% {
+            transform: scale(1.05) rotateX(-10deg);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1) rotateX(0deg);
             opacity: 1;
           }
         }
-        @keyframes text-glow {
-          0%, 100% { text-shadow: 0 0 5px #F59E0B, 0 0 10px #F59E0B, 0 0 15px #2563EB, 0 0 20px #2563EB; }
-          50% { text-shadow: 0 0 10px #2563EB, 0 0 15px #2563EB, 0 0 20px #F59E0B, 0 0 25px #F59E0B; }
-        }
-        .splash-logo {
-          animation: rotate-in 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        .splash-content {
           transform-style: preserve-3d;
-        }
-        .splash-text {
-           animation: text-glow 2.5s ease-in-out infinite;
+          animation: pulse-in 1.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
         }
       `}</style>
-      <div className="splash-logo perspective-[1000px]">
-        <div className="w-32 h-32 bg-white rounded-[2.8rem] flex items-center justify-center shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border-4 border-orange-500">
-          <Hexagon size={64} className="text-blue-600" strokeWidth={3} />
+      <div className="splash-content perspective-[800px]">
+        <div className="flex flex-col items-center justify-center">
+            <Hexagon size={80} className="text-blue-600" strokeWidth={2.5} />
+            <h1 className="text-6xl font-black tracking-tighter text-black mt-6">
+              <span className="text-orange-500">RCM</span>
+              <span className="text-blue-600"> ERP</span>
+            </h1>
+            <p className="text-xs text-slate-400 tracking-[0.2em] mt-2">R.C.M. HARDWARE</p>
         </div>
-      </div>
-      <div className="text-center px-6 mt-12 space-y-2">
-        <h1 className="text-7xl font-black italic tracking-tighter text-black uppercase splash-text">
-          <span style={{color: '#F97316'}}>RCM</span> <span style={{color: '#2563EB'}}>ERP</span>
-        </h1>
-        <p className="text-xs text-gray-500 uppercase tracking-[0.3em] font-bold">R.C.M. HARDWARE</p>
       </div>
     </div>
   );
@@ -99,41 +95,86 @@ const SuccessScreen = ({ data, onDismiss }: { data: SuccessData; onDismiss: () =
 };
 
 const LoginScreen = () => {
-  const [email] = useState('rcmhardware@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password || loading) return;
+    if (!email || !password || loading) return;
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) toast.error("CREDENTIALS REJECTED");
-    } catch (err) { toast.error("SYSTEM ERROR"); }
+      if (error) toast.error("Credentials Rejected");
+    } catch (err) { toast.error("System Error"); }
     finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-full w-full flex items-center justify-center p-8 bg-white">
-      <div className="w-full max-w-sm space-y-12">
-        <div className="flex flex-col items-center space-y-6">
-           <div className="w-24 h-24 bg-black rounded-[2rem] flex items-center justify-center shadow-2xl border-4 border-blue-600">
-             <Hexagon size={48} className="text-white" strokeWidth={4} />
-           </div>
-           <div className="text-center">
-             <h2 className="text-5xl font-black italic uppercase tracking-tighter text-black">ADMIN</h2>
-             <p className="text-xs text-black uppercase tracking-[0.4em] font-black italic opacity-60">Terminal Login</p>
-           </div>
+    <div className="min-h-full w-full flex flex-col items-center justify-center p-8 bg-white text-black">
+        <style>{`
+            @keyframes letter-flip-in {
+              from {
+                transform: rotateY(-90deg) scale(1.2);
+                opacity: 0;
+              }
+              to {
+                transform: rotateY(0deg) scale(1);
+                opacity: 1;
+              }
+            }
+            .rcm-logo-letter {
+              display: inline-block;
+              transform-style: preserve-3d;
+              animation: letter-flip-in 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            }
+            .rcm-logo-letter:nth-child(1) { animation-delay: 0.1s; }
+            .rcm-logo-letter:nth-child(2) { animation-delay: 0.25s; }
+            .rcm-logo-letter:nth-child(3) { animation-delay: 0.4s; }
+        `}</style>
+        <div className="w-full max-w-sm">
+            <div className="text-center mb-12 perspective-[600px]">
+                <div className="mb-6">
+                    <h1 className="text-8xl font-black tracking-tighter">
+                        <span className="rcm-logo-letter text-orange-500">R</span>
+                        <span className="rcm-logo-letter text-blue-600">C</span>
+                        <span className="rcm-logo-letter text-black">M</span>
+                    </h1>
+                </div>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-800">Admin Terminal</h2>
+                <p className="text-sm text-slate-500 mt-1">Welcome back, please log in.</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-8">
+                <div className="relative">
+                    <AtSign size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input 
+                        type="email" 
+                        value={email}
+                        autoFocus
+                        onChange={e => setEmail(e.target.value)} 
+                        placeholder="Email Address" 
+                        className="w-full pl-12 pr-4 py-4 bg-transparent border-b-2 border-slate-200 outline-none focus:border-orange-500 transition-colors"
+                    />
+                </div>
+                <div className="relative">
+                    <KeyRound size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input 
+                        type="password" 
+                        value={password} 
+                        onChange={e => setPassword(e.target.value)} 
+                        placeholder="Password" 
+                        className="w-full pl-12 pr-4 py-4 bg-transparent border-b-2 border-slate-200 outline-none focus:border-orange-500 transition-colors"
+                    />
+                </div>
+                <button 
+                    disabled={loading} 
+                    className="w-full bg-black text-white h-14 rounded-xl font-bold text-sm shadow-lg flex items-center justify-center active:scale-95 transition-all disabled:bg-slate-300"
+                >
+                    {loading ? <Loader2 className="animate-spin" /> : "Log In"}
+                </button>
+            </form>
         </div>
-        <form onSubmit={handleLogin} className="space-y-6">
-          <input type="email" value={email} disabled className="w-full h-16 px-6 font-black rounded-2xl border-4 border-black bg-white text-black uppercase text-sm" />
-          <input autoFocus type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="SECRET KEY" className="w-full h-16 px-6 font-black rounded-2xl border-4 border-black bg-white text-black uppercase text-sm outline-none focus:border-blue-600" />
-          <button disabled={loading} className="w-full bg-blue-600 text-white h-16 rounded-2xl font-black uppercase italic shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all border-4 border-black">
-            {loading ? <Loader2 className="animate-spin" /> : "LOG IN TERMINAL"}
-          </button>
-        </form>
-      </div>
     </div>
   );
 };
