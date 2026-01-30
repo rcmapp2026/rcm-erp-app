@@ -108,7 +108,6 @@ const Orders: React.FC = () => {
         }
       }
 
-      // --- ENHANCED ORDER UPDATE MESSAGE ---
       const shopName = selectedOrder.dealers?.shop_name || "VALUED DEALER";
       const orderNo = selectedOrder.order_no;
       const status = financials.status;
@@ -116,7 +115,7 @@ const Orders: React.FC = () => {
       
       const waMsg = `📦 *ORDER UPDATE* 📦\n\nHello *${shopName}*,\n\nYour Order *#ORD-${orderNo}* status has been updated to: *${status}* ${statusEmoji}\n\n💰 *Total Amount:* ₹${Math.round(finalTotal).toLocaleString()}\n📍 *Status:* ${status.toUpperCase()} ⏳\n\n_Thank you for choosing RCM Hardware_ 🙏`;
       
-      PermissionHandler.shareImageAndText(undefined, waMsg, selectedOrder.dealers?.mobile, `Order-${orderNo}.txt`);
+      PermissionHandler.openWhatsApp(selectedOrder.dealers?.mobile, waMsg);
 
       toast.success("SYNCED ✅");
       setSelectedOrder(null);
@@ -150,21 +149,16 @@ const Orders: React.FC = () => {
     finally { setUpdateLoading(false); }
   };
 
-  const filteredProducts = productSearch.length > 0 
-    ? products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.sku.toLowerCase().includes(productSearch.toLowerCase()))
-    : [];
-
   const handleSaveNewOrder = async () => {
     if (!selectedDealer || manualItems.length === 0) return toast.error("Dealer and items are required.");
     setUpdateLoading(true);
     try {
       const subtotal = manualItems.reduce((sum, item) => sum + item.amount, 0);
       
-      // Step 1: Create the order and get the new order ID
       const { data: orderData, error: orderError } = await supabase.from('orders').insert([{
         dealer_id: selectedDealer.id,
         subtotal: subtotal,
-        final_total: subtotal, // Initially same as subtotal
+        final_total: subtotal, 
         status: 'Pending'
       }]).select().single();
 
@@ -173,7 +167,6 @@ const Orders: React.FC = () => {
 
       const newOrderId = orderData.id;
 
-      // Step 2: Prepare order items with the new order ID and clean payload
       const itemsToInsert = manualItems.map(item => ({
         order_id: newOrderId,
         product_id: item.product_id,
@@ -185,7 +178,6 @@ const Orders: React.FC = () => {
         unit: item.unit
       }));
 
-      // Step 3: Insert all items
       const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
       if (itemsError) throw itemsError;
 

@@ -1,57 +1,79 @@
 import { Directory, Filesystem } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
 import toast from 'react-hot-toast';
+import { shareNative } from './nativeShareBridge';
 
-// Reliable Base64 to Blob converter for web
 const base64ToBlob = (base64: string, mimeType: string): Blob => {
     const parts = base64.split(';base64,');
+    const contentType = parts[0].split(':')[1] || mimeType;
     const raw = window.atob(parts[1]);
-    const uInt8Array = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; ++i) {
+    const rawLength = raw.length;
+    const uInt8Array = new Uint8Array(rawLength);
+
+    for (let i = 0; i < rawLength; ++i) {
         uInt8Array[i] = raw.charCodeAt(i);
     }
-    return new Blob([uInt8Array], { type: mimeType });
+    return new Blob([uInt8Array], { type: contentType });
 };
 
-/**
- * The FINAL, GUARANTEED, bulletproof sharing core.
- */
+interface ShareFile {
+    base64Data: string;
+    fileName: string;
+    mimeType: string;
+}
+
 export const shareContent = async (
-  base64Data: string,
-  fileName: string,
+  files: ShareFile[],
   text: string,
-  mimeType: string
 ) => {
   try {
-    const file = base64ToBlob(base64Data, mimeType);
-
-    // NATIVE APK PATH
     if (Capacitor.isNativePlatform()) {
-      const writeResult = await Filesystem.writeFile({
-        path: fileName,
-        data: base64Data, // Pass the full data URI
-        directory: Directory.Cache,
-      });
+      if (!files || files.length === 0) {
+        shareNative(text, []);
+        return;
+      }
 
-      await Share.share({ text, url: writeResult.uri });
+      const filePaths: string[] = [];
+      for (const file of files) {
+          const cleanBase64 = file.base64Data.split(',')[1] || file.base64Data;
+          const writeResult = await Filesystem.writeFile({
+            path: file.fileName,
+            data: cleanBase64,
+            directory: Directory.Cache,
+          });
+          filePaths.push(writeResult.uri);
+      }
+
+      shareNative(text, filePaths);
       return;
     }
 
-    // WEB BROWSER PATH (Corrected)
-    if (navigator.share && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], text: text });
-    } else {
-      // Fallback to download
+    const webFiles: File[] = files.map(f => {
+        const blob = base64ToBlob(f.base64Data, f.mimeType);
+        return new File([blob], f.fileName, { type: f.mimeType });
+    });
+
+    if (navigator.share && navigator.canShare({ files: webFiles })) {
+      await navigator.share({ files: webFiles, text, title: "Share" });
+    } else if (webFiles.length === 1) {
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(file);
-      link.download = fileName;
-      document.body.appendChild(link);
+      link.href = URL.createObjectURL(webFiles[0]);
+      link.download = webFiles[0].name;
       link.click();
-      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } else {
+      toast.error("Sharing multiple files is not supported by your browser.");
     }
+
   } catch (err) {
-    console.error("ULTIMATE SHARING FAILED:", err);
-    toast.error("Sharing is not available on this device.");
+    console.error("FATAL SHARE ERROR:", err);
+    toast.error("Sharing failed on this device.");
   }
+};
+
+export const openWhatsApp = (mobile: string, text: string) => {
+  if (!mobile) return;
+  const sanitizedMobile = mobile.replace(/\D/g, '');
+  const url = `https://wa.me/91${sanitizedMobile}?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
 };
