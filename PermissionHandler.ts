@@ -1,15 +1,13 @@
-// This file now ONLY calls the new, bulletproof sharing engine.
-import { shareFileAndText } from './utils/sharingEngine';
+import { shareContent } from './utils/sharingCore'; // Use the NEW core
 
 export class PermissionHandler {
-
   static async shareImageAndText(
     base64Data?: string,
     text: string = '',
     fileName: string = 'RCM_Reminder.png'
   ) {
     if (!base64Data) return;
-    await shareFileAndText(base64Data, fileName, text, 'image/png');
+    await shareContent(base64Data, fileName, text, 'image/png');
   }
 
   static async sharePdf(
@@ -17,6 +15,6 @@ export class PermissionHandler {
     fileName: string,
     text: string
   ) {
-    await shareFileAndText(base64Data, fileName, text, 'application/pdf');
+    await shareContent(base64Data, fileName, text, 'application/pdf');
   }
 }
