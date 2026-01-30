@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RCM ERP</string>
+    <string name="title_activity_main">RCM ERP</string>
+    <string name="package_name">com.rcm.erp</string>
+    <string name="custom_url_scheme">com.rcm.erp</string>
+</resources>

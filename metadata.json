@@ -1,0 +1,15 @@
+{
+  "name": "RCM  ERP",
+  "short_name": "RCM Admin",
+  "description": "Production-grade Enterprise Terminal for RCM Hardware.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2563EB",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

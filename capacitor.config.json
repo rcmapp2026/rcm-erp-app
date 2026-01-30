@@ -1,0 +1,6 @@
+{
+  "appId": "com.rcm.erp",
+  "appName": "RCM ERP",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

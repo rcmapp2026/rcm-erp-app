@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2563EB">
+    <title>RCM ERP ADMIN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { 
+            font-size: 10px;
+            --rcm-blue: #2563EB; 
+            --rcm-black: #000000;
+        }
+        * { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body { 
+            background-color: #ffffff; 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100dvh; 
+            overflow: hidden; 
+            position: fixed; 
+            top: 0;
+            left: 0;
+        }
+        #root { 
+            display: flex; 
+            width: 100%; 
+            height: 100%; 
+            background: #ffffff; 
+            overflow: hidden;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        input, select, textarea { 
+            border-radius: 12px !important; 
+            font-size: 16px !important; 
+            padding: 12px 16px; 
+            outline: none !important; 
+            background: #f8fafc !important;
+            font-weight: 700;
+        }
+        
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .page-transition { animation: slideInRight 0.3s ease-out; }
+    </style>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "recharts": "https://esm.sh/recharts@2.15.0?external=react,react-dom",
+    "lucide-react": "https://esm.sh/lucide-react@0.475.0?external=react",
+    "react-hot-toast": "https://esm.sh/react-hot-toast@2.4.1?external=react,react-dom",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.28.0?external=react,react-dom",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.48.1",
+    "@/": "./",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
