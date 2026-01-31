@@ -7,7 +7,7 @@ export const FileUtils = {
    * Universal File Handling Protocol
    * Detects platform and applies best save/share logic.
    */
-  saveAndShare: async (blob: Blob, filename: string, text: string) => {
+  saveAndShare: async (blob: Blob, filename: string, text: string, mobile?: string) => {
     try {
       // 1. Android APK Integration (Priority)
       if ((window as any).AndroidInterface) {
@@ -18,15 +18,16 @@ export const FileUtils = {
           // Trigger APK Share Bridge
           if ((window as any).AndroidInterface.shareFile) {
             (window as any).AndroidInterface.shareFile(
-              base64data, 
-              filename, 
+              base64data,
+              filename,
               blob.type,
-              text
+              text,
+              mobile || ''
             );
           } else if ((window as any).AndroidInterface.downloadFile) {
             (window as any).AndroidInterface.downloadFile(
-              base64data, 
-              filename, 
+              base64data,
+              filename,
               blob.type
             );
             toast.success("Document Saved in Downloads Hub");

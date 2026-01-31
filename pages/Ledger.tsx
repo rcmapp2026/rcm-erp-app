@@ -11,6 +11,18 @@ import { PermissionHandler } from '../PermissionHandler';
 import { useSuccess } from '../App';
 import { ImageGenerator } from '../services/ImageGenerator';
 
+// Helper to convert base64 to Blob
+const base64toBlob = (base64Data: string, mimeType: string): Blob => {
+    const byteCharacters = atob(base64Data.split(',')[1]);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
+};
+
+
 const Ledger: React.FC = () => {
   const [dealers, setDealers] = useState<any[]>([]);
   const [selectedDealer, setSelectedDealer] = useState<any | null>(null);
@@ -119,20 +131,31 @@ const Ledger: React.FC = () => {
         profileName: profile?.name || 'RCM ERP'
       });
       
+      // Upload image to Supabase storage (optional backup)
+      try {
+        const blob = base64toBlob(generatedImageData, 'image/png');
+        const path = `reminders/reminder-${selectedDealer.id}-${Date.now()}.png`;
+        await supabase.storage.from('products').upload(path, blob);
+      } catch (uploadErr) {
+        console.warn("Cloud backup failed, continuing with direct share", uploadErr);
+      }
+
       let waText = '';
       if (mode === 'Standard') {
         waText = `🔔 *PAYMENT REMINDER* 🔔\n\nHello *${shopName}*,\n\nThis is a friendly reminder that your balance of *₹${amountStr}* is outstanding.\n\n📍*Pending Amount:* *₹${amountStr}*💸\n⏳ *Remaining Time:* *${days} Days*\n\n_Sent via RCM ERP_ 🙏`;
       } else { // Urgent
         waText = `🚨*URGENT: PAYMENT OVERDUE*🚨\n\nHello *${shopName}*,\n\nYour account has reached a *CRITICAL* state with an outstanding balance of *₹${amountStr}*.\n\n📍*Overdue Amount:* ₹${amountStr}🛑\n⚠️*Status:* *URGENT ACTION REQUIRED*\n⏳ *Deadline:* *${days} Days*\n\n_Authorized by RCM ERP_ ⚠️`;
       }
+      
+      // FIX: Use shareImageAndText for combined Image + Text sharing
+      await PermissionHandler.shareImageAndText(generatedImageData, waText, 'Payment Reminder');
 
-      await PermissionHandler.shareImageAndText(generatedImageData, waText, selectedDealer.mobile);
       setSentLog(prev => ({ ...prev, [`${selectedDealer.id}-${mode}`]: true }));
       toast.dismiss(toastId);
-      toast.success("Reminder Sent!");
+      toast.success("Ready to Share!");
     } catch (e) { 
       toast.dismiss(toastId); 
-      toast.error("Failed to send reminder."); 
+      toast.error("Failed to prepare reminder.");
       console.error(e);
     }
   };
@@ -315,9 +338,10 @@ const Ledger: React.FC = () => {
                     if (!cardPreview) return toast.error("Generate card first!");
                     const toastId = toast.loading("Sharing...");
                     try {
-                      await PermissionHandler.shareImageAndText(cardPreview, '', selectedDealer.mobile);
-                      toast.dismiss(toastId);
-                      toast.success("Shared to Hub!");
+                        // FIX: Only share IMAGE for Card Hub (no text)
+                        await PermissionHandler.shareImageAndText(cardPreview, '', 'Dealer Card');
+                        toast.dismiss(toastId);
+                        toast.success("Shared to Hub!");
                     } catch(e) {
                       toast.dismiss(toastId);
                       toast.error("Sharing failed.");

@@ -69,82 +69,19 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun shareFile(base64Data: String, fileName: String, mimeType: String, text: String, mobile: String) {
             try {
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Preparing file for sharing...", Toast.LENGTH_SHORT).show()
-                }
-
-                // Validate input
-                if (base64Data.isEmpty()) {
-                    throw Exception("Base64 data is empty")
-                }
-
-                // Extract pure base64
                 val pureBase64 = if (base64Data.contains(",")) base64Data.split(",")[1] else base64Data
-                if (pureBase64.isEmpty()) {
-                    throw Exception("Invalid base64 format")
-                }
-
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Decoding file data...", Toast.LENGTH_SHORT).show()
-                }
-
-                // Decode base64 with error handling
-                val bytes = try {
-                    android.util.Base64.decode(pureBase64, android.util.Base64.DEFAULT)
-                } catch (e: OutOfMemoryError) {
-                    throw Exception("File too large for device memory")
-                } catch (e: Exception) {
-                    throw Exception("Base64 decode failed: ${e.message}")
-                }
-
-                // Check file size limit (50MB)
-                val maxSize = 50 * 1024 * 1024 // 50MB
-                if (bytes.size > maxSize) {
-                    throw Exception("File too large (${bytes.size} bytes). Maximum allowed: ${maxSize} bytes")
-                }
-
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Creating file (${bytes.size} bytes)...", Toast.LENGTH_SHORT).show()
-                }
-
-                // Create cache directory
+                val bytes = android.util.Base64.decode(pureBase64, android.util.Base64.DEFAULT)
+                
                 val cachePath = File(cacheDir, "shared_docs")
-                if (!cachePath.exists()) {
-                    val created = cachePath.mkdirs()
-                    if (!created) {
-                        throw Exception("Failed to create cache directory")
-                    }
-                }
-
-                // Create file
+                if (!cachePath.exists()) cachePath.mkdirs()
                 val file = File(cachePath, fileName)
-                val fos = FileOutputStream(file)
-                try {
-                    fos.write(bytes)
-                    fos.flush()
-                } finally {
-                    fos.close()
-                }
+                FileOutputStream(file).use { it.write(bytes) }
 
-                // Verify file was created
                 if (!file.exists() || file.length() == 0L) {
                     throw Exception("File creation failed or file is empty")
                 }
 
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "File created (${file.length()} bytes), preparing share...", Toast.LENGTH_SHORT).show()
-                }
-
-                // Get URI with error handling
-                val uri = try {
-                    FileProvider.getUriForFile(this@MainActivity, "$packageName.fileprovider", file)
-                } catch (e: Exception) {
-                    throw Exception("FileProvider failed: ${e.message}")
-                }
-
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Opening share dialog...", Toast.LENGTH_SHORT).show()
-                }
+                val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.fileprovider", file)
 
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = mimeType
@@ -152,64 +89,47 @@ class MainActivity : AppCompatActivity() {
                     if (text.isNotEmpty()) putExtra(Intent.EXTRA_TEXT, text)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-
-                if (mobile.isNotEmpty()) {
-                    // Try to send directly to WhatsApp
-                    intent.setPackage("com.whatsapp")
-                    try {
-                        if (!isFinishing && !isDestroyed) {
-                            startActivity(intent)
-                            runOnUiThread {
-                                Toast.makeText(this@MainActivity, "Shared to WhatsApp!", Toast.LENGTH_SHORT).show()
-                            }
-                            return
-                        }
-                    } catch (e: Exception) {
-                        runOnUiThread {
-                            Toast.makeText(this@MainActivity, "WhatsApp not available, trying WhatsApp Business...", Toast.LENGTH_SHORT).show()
-                        }
-                        // WhatsApp not available, try WhatsApp Business
-                        intent.setPackage("com.whatsapp.w4b")
-                        try {
-                            if (!isFinishing && !isDestroyed) {
-                                startActivity(intent)
-                                runOnUiThread {
-                                    Toast.makeText(this@MainActivity, "Shared to WhatsApp Business!", Toast.LENGTH_SHORT).show()
-                                }
-                                return
-                            }
-                        } catch (e2: Exception) {
-                            runOnUiThread {
-                                Toast.makeText(this@MainActivity, "WhatsApp Business not available, using share chooser...", Toast.LENGTH_SHORT).show()
-                            }
-                            // Fall back to chooser
-                            intent.setPackage(null)
-                        }
-                    }
-                }
-
-                if (!isFinishing && !isDestroyed) {
-                    try {
-                        val chooser = Intent.createChooser(intent, "Share RCM Document")
-                        startActivity(chooser)
-                        runOnUiThread {
-                            Toast.makeText(this@MainActivity, "Share dialog opened!", Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        throw Exception("Failed to open share dialog: ${e.message}")
-                    }
-                } else {
-                    throw Exception("Activity is finishing or destroyed")
-                }
+                
+                startActivity(Intent.createChooser(intent, "Share RCM Document"))
 
             } catch (e: Exception) {
                 runOnUiThread {
                     Toast.makeText(this@MainActivity, "Share failed: ${e.message}", Toast.LENGTH_LONG).show()
                 }
-                e.printStackTrace()
-                // Log additional details
+            }
+        }
+
+        @JavascriptInterface
+        fun downloadFile(base64Data: String, fileName: String, mimeType: String) {
+            try {
+                val pureBase64 = if (base64Data.contains(",")) base64Data.split(",")[1] else base64Data
+                val bytes = android.util.Base64.decode(pureBase64, android.util.Base64.DEFAULT)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val contentValues = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                        put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                    }
+                    val resolver = contentResolver
+                    val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                    uri?.let {
+                        resolver.openOutputStream(it).use { output ->
+                            output?.write(bytes)
+                        }
+                    } ?: throw Exception("MediaStore URI is null")
+                } else {
+                    val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    val file = File(downloadsDir, fileName)
+                    FileOutputStream(file).use { it.write(bytes) }
+                }
+
                 runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Error details: ${e.javaClass.simpleName}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@MainActivity, "File saved to Downloads", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -233,9 +153,6 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun checkStoragePermissions(): Boolean {
-            // For file sharing using cache directory and FileProvider,
-            // we don't need special storage permissions on modern Android
-            // The cache directory is always accessible to the app
             return true
         }
 
@@ -254,24 +171,16 @@ class MainActivity : AppCompatActivity() {
 
     fun requestAppPermissions() {
         val permissions = mutableListOf<String>()
-
-        // Only request basic permissions, not storage permissions since we use cache
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
-
         permissions.add(Manifest.permission.CAMERA)
-
-        // Remove the MANAGE_EXTERNAL_STORAGE special handling since we don't need it
 
         val list = permissions.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
         if (list.isNotEmpty()) {
             ActivityCompat.requestPermissions(this, list.toTypedArray(), PERMISSION_REQUEST_CODE)
         } else {
-            // All permissions already granted
             runOnUiThread {
-                Toast.makeText(this, "Permissions ready", Toast.LENGTH_SHORT).show()
-                // Notify JavaScript that permissions are granted
                 try {
                     webView.evaluateJavascript("window.permissionResult && window.permissionResult(true)", null)
                 } catch (e: Exception) {
@@ -284,31 +193,12 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            val deniedPermissions = mutableListOf<String>()
-            for (i in permissions.indices) {
-                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                    deniedPermissions.add(permissions[i])
-                }
-            }
-            val allGranted = deniedPermissions.isEmpty()
-
-            // Notify JavaScript about permission result
+            val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
             runOnUiThread {
                 try {
                     webView.evaluateJavascript("window.permissionResult && window.permissionResult($allGranted)", null)
                 } catch (e: Exception) {
-                    // Fallback to interface method
                     onPermissionResult(allGranted)
-                }
-            }
-
-            if (!allGranted) {
-                runOnUiThread {
-                    Toast.makeText(this, "Permissions denied: ${deniedPermissions.joinToString()}", Toast.LENGTH_LONG).show()
-                }
-            } else {
-                runOnUiThread {
-                    Toast.makeText(this, "All permissions granted", Toast.LENGTH_SHORT).show()
                 }
             }
         }

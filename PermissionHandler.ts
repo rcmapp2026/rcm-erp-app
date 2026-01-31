@@ -1,46 +1,43 @@
-import { shareContent, openWhatsApp as openWhatsAppCore } from './utils/sharingCore';
 
-interface ShareFile {
-    base64Data: string;
-    fileName: string;
-    mimeType: string;
-}
+import { sharingService } from './services/sharingService';
 
 export class PermissionHandler {
+
+  private static isAndroid(): boolean {
+    return /Android/i.test(navigator.userAgent);
+  }
 
   static async shareImageAndText(
     base64Data?: string,
     text: string = '',
-    fileName: string = 'RCM_Reminder.png'
+    title: string = 'RCM Business'
   ) {
     if (!base64Data) return;
 
-    await shareContent(
-      [{ base64Data, fileName, mimeType: 'image/png' }],
-      text
-    );
+    await sharingService.share({
+      title,
+      text,
+      imageUrl: base64Data,
+    });
   }
 
   static async sharePdf(
     base64Data: string,
     fileName: string,
-    text: string
+    text: string,
+    title: string = 'RCM Business'
   ) {
-    await shareContent(
-      [{ base64Data, fileName, mimeType: 'application/pdf' }],
-      text
-    );
-  }
-
-  static async shareMultipleFiles(
-    files: ShareFile[],
-    text: string
-  ) {
-      if (!files || files.length === 0) return;
-      await shareContent(files, text);
+    await sharingService.share({
+      title,
+      text,
+      pdfUrl: base64Data,
+      fileName,
+    });
   }
 
   static openWhatsApp(mobile: string, text: string) {
-    openWhatsAppCore(mobile, text);
+    const sanitizedMobile = mobile.replace(/\D/g, '').slice(-10);
+    const url = `https://wa.me/91${sanitizedMobile}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
   }
 }

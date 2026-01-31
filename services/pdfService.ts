@@ -114,49 +114,49 @@ export const PdfTemplates = {
 
   generateCertificateHtml: (dealer: Dealer) => `
     <div class="pdf-page">
-      <div class="cert-container" style="width: 100%; height: 100%; border: 15px solid #000; outline: 3px solid #CDA434; outline-offset: -25px; padding: 30px; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; align-items: center; position: relative;">
-        <div style="width: 100%; height: 100%; border: 2px solid #CDA434; padding: 60px 40px; display: flex; flex-direction: column; align-items: center; position: relative;">
-          <div style="text-align: center; margin-bottom: 30px;">
-             <div class="rcm-logo"><span class="rcm-r">R</span><span class="rcm-c">C</span><span class="rcm-m">M</span></div>
-             <div class="title-3d" style="margin-top: 15px;">R.C.M. HARDWARE</div>
+      <div class="cert-container" style="width: 100%; height: 100%; border: 15px solid #000; outline: 3px solid #CDA434; outline-offset: -25px; padding: 20px; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; align-items: center; position: relative;">
+        <div style="width: 100%; height: 100%; border: 2px solid #CDA434; padding: 40px 40px; display: flex; flex-direction: column; align-items: center; position: relative;">
+          <div style="text-align: center; margin-bottom: 20px;">
+             <div class="rcm-logo" style="font-size: 40px;"><span class="rcm-r">R</span><span class="rcm-c">C</span><span class="rcm-m">M</span></div>
+             <div class="title-3d" style="margin-top: 10px; font-size: 34px;">R.C.M. HARDWARE</div>
           </div>
-          <div style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 900; color: #000; text-transform: uppercase; letter-spacing: 4px; margin: 20px 0; text-align: center;">Certificate of Dealership</div>
-          <p style="font-size: 14px; font-weight: 900; color: #666; margin-top: 15px; text-transform: uppercase; text-align: center;">This official document certifies that</p>
-          <h2 style="font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 900; color: #CDA434; margin: 15px 0; text-transform: uppercase; border-bottom: 6px double #CDA434; width: 90%; text-align: center;">${dealer.shop_name}</h2>
-          <p style="font-size: 12px; font-weight: 900; color: #444; margin-bottom: 40px; font-style: italic; text-align: center; max-width: 550px; line-height: 1.8;">Is officially registered and authorized to represent, distribute, and serve as a business hub for R.C.M. Hardware products.</p>
-          <div style="width: 100%; max-width: 650px; border: 2.5px solid #CDA434; padding: 45px 50px 35px 50px; position: relative; background: #fff;">
-             <div style="display: flex; flex-direction: column; gap: 14px;">
-                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 8px;">
-                   <span style="width: 220px; font-size: 11px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Shop Name</span>
-                   <span style="font-weight: 900; font-size: 14px; color: #0F172A; text-transform: uppercase;">${dealer.shop_name}</span>
+          <div style="font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 900; color: #000; text-transform: uppercase; letter-spacing: 4px; margin: 15px 0; text-align: center;">Certificate of Dealership</div>
+          <p style="font-size: 13px; font-weight: 900; color: #666; margin-top: 10px; text-transform: uppercase; text-align: center;">This official document certifies that</p>
+          <h2 style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 900; color: #CDA434; margin: 15px 0; text-transform: uppercase; border-bottom: 6px double #CDA434; width: 90%; text-align: center; padding-bottom: 5px;">${dealer.shop_name}</h2>
+          <p style="font-size: 11px; font-weight: 900; color: #444; margin-bottom: 30px; font-style: italic; text-align: center; max-width: 550px; line-height: 1.6;">Is officially registered and authorized to represent, distribute, and serve as a business hub for R.C.M. Hardware products.</p>
+          <div style="width: 100%; max-width: 650px; border: 2.5px solid #CDA434; padding: 35px 40px 25px 40px; position: relative; background: #fff;">
+             <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
+                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Shop Name</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; text-transform: uppercase;">${dealer.shop_name}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 8px;">
-                   <span style="width: 220px; font-size: 11px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Proprietor</span>
-                   <span style="font-weight: 900; font-size: 14px; color: #0F172A;">${dealer.owner_name}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
+                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Proprietor</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A;">${dealer.owner_name}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5 solid #F1F5F9; padding-bottom: 8px;">
-                   <span style="width: 220px; font-size: 11px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Mobile Number</span>
-                   <span style="font-weight: 900; font-size: 14px; color: #0F172A;">+91 ${dealer.mobile}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
+                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Mobile Number</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A;">+91 ${dealer.mobile}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5 solid #F1F5F9; padding-bottom: 8px;">
-                   <span style="width: 220px; font-size: 11px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registry No.</span>
-                   <span style="font-weight: 900; font-size: 14px; color: #0F172A;">${dealer.dealer_code || 'REG-PENDING'}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
+                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registry No.</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A;">${dealer.dealer_code || 'REG-PENDING'}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5 solid #F1F5F9; padding-bottom: 8px;">
-                   <span style="width: 220px; font-size: 11px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Pincode</span>
-                   <span style="font-weight: 900; font-size: 14px; color: #0F172A;">${dealer.pincode || 'N/A'}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
+                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Pincode</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A;">${dealer.pincode || 'N/A'}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5 solid #F1F5F9; padding-bottom: 8px;">
-                   <span style="width: 220px; font-size: 11px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registered Address</span>
-                   <span style="font-weight: 900; font-size: 14px; color: #0F172A; line-height: 1.2;">${dealer.address}, ${dealer.city}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
+                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registered Address</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; line-height: 1.2;">${dealer.address}, ${dealer.city}</span>
                 </div>
              </div>
           </div>
-          <div style="width: 100%; margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 40px; padding-bottom: 40px;">
-             <div style="font-size: 12px; font-weight: 900; color: #000;">ISSUED: ${new Date().toLocaleDateString('en-GB')}</div>
+          <div style="width: 100%; margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 20px; padding-bottom: 20px;">
+             <div style="font-size: 11px; font-weight: 900; color: #000;">ISSUED: ${new Date().toLocaleDateString('en-GB')}</div>
              <div style="text-align: center;">
-                <div style="width: 220px; border-bottom: 3px solid #CDA434; margin-bottom: 12px;"></div>
-                <div style="font-size: 13px; font-weight: 900; text-transform: uppercase;">Authorized Signatory</div>
+                <div style="width: 200px; border-bottom: 3px solid #CDA434; margin-bottom: 10px;"></div>
+                <div style="font-size: 12px; font-weight: 900; text-transform: uppercase;">Authorized Signatory</div>
              </div>
           </div>
         </div>

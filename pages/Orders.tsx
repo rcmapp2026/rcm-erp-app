@@ -47,7 +47,7 @@ const Orders: React.FC = () => {
   useEffect(() => { 
     fetchOrders(); 
     supabase.from('dealers').select('*').order('shop_name').then(({data}) => setDealers(data || []));
-    supabase.from('products').select('*, product_variants(*)').order('name').then(({data}) => setProducts(data || []));
+    supabase.from('products').select('*, product_variants(*), company:company_id(name)').order('name').then(({data}) => setProducts(data || []));
     supabase.from('company_profile').select('*').single().then(({data}) => setProfile(data));
     
     const channel = supabase.channel('orders-hub-v9').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders).subscribe();
@@ -171,6 +171,7 @@ const Orders: React.FC = () => {
         order_id: newOrderId,
         product_id: item.product_id,
         product_name: item.product_name,
+        company_name: item.company_name,
         size: item.size,
         rate: item.rate,
         quantity: item.quantity,
@@ -192,6 +193,10 @@ const Orders: React.FC = () => {
       setUpdateLoading(false);
     }
   };
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(productSearch.toLowerCase()) || 
+    p.sku?.toLowerCase().includes(productSearch.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col h-full bg-white font-black text-left overflow-hidden">
@@ -257,7 +262,7 @@ const Orders: React.FC = () => {
                    <div className="space-y-3">
                       {manualItems.map((mi, idx) => (
                         <div key={idx} className="p-5 bg-white rounded-2xl border-2 border-blue-50 flex justify-between items-center shadow-sm">
-                           <div className="truncate pr-4"><p className="text-[11px] font-black uppercase italic truncate text-gray-900">{mi.product_name}</p><p className="text-[8px] text-gray-400 uppercase italic font-black mt-1">{mi.size} | Qty: {mi.quantity}</p></div>
+                           <div className="truncate pr-4"><p className="text-[11px] font-black uppercase italic truncate text-gray-900">{mi.product_name}</p><p className="text-[8px] text-gray-400 uppercase italic font-black mt-1">{mi.company_name} | {mi.size} | Qty: {mi.quantity}</p></div>
                            <button onClick={() => setManualItems(manualItems.filter((_, i) => i !== idx))} className="p-2.5 text-red-500 bg-red-50 rounded-xl"><Trash2 size={16}/></button>
                         </div>
                       ))}
@@ -307,7 +312,7 @@ const Orders: React.FC = () => {
                     <div key={item.id} className="p-5 bg-white border-2 border-blue-50 rounded-3xl flex items-center justify-between shadow-sm">
                         <div className="truncate flex-1 pr-4">
                            <h4 className="font-black text-xs uppercase italic truncate text-gray-900">{item.product_name}</h4>
-                           <p className="text-[8px] text-gray-400 uppercase italic font-black mt-1">{item.size} • ₹{item.rate} x {item.quantity}</p>
+                           <p className="text-[8px] text-gray-400 uppercase italic font-black mt-1">{item.company_name} | {item.size} • ₹{item.rate} x {item.quantity}</p>
                         </div>
                         <div className="flex items-center gap-4">
                            <p className="text-sm font-black italic text-gray-900 shrink-0">₹{Number(item.amount).toLocaleString()}</p>
@@ -387,7 +392,7 @@ const Orders: React.FC = () => {
                  {selectedProduct && (
                    <div className="space-y-6 animate-in fade-in pt-2">
                       <div className="grid grid-cols-2 gap-3">
-                         {selectedProduct.product_variants?.map((v, i) => (
+                         {(selectedProduct.product_variants || []).map((v, i) => (
                            <button key={i} onClick={() => { setSelectedVariant(v); setManualRate(v.final_price); }} className={`p-5 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-1 ${selectedVariant?.size === v.size ? 'bg-blue-600 text-white border-blue-700 shadow-lg scale-105' : 'bg-slate-100 text-gray-400 border-transparent'}`}>
                               <p className="text-[10px] font-black uppercase italic">{v.size}</p>
                               <p className="text-[9px] font-black">₹{v.final_price}</p>
@@ -411,8 +416,10 @@ const Orders: React.FC = () => {
               
               <div className="shrink-0 pt-4 border-t">
                  <button onClick={() => {
+                   if (!selectedProduct) return;
                    if (showManualModal) {
-                     setManualItems([...manualItems, { product_id: selectedProduct?.id, product_name: selectedProduct?.name, size: selectedVariant?.size, rate: manualRate, quantity, amount: manualRate * quantity, unit: selectedProduct?.unit }]);
+                     const companyName = (selectedProduct as any)?.company?.name || '';
+                     setManualItems([...manualItems, { product_id: selectedProduct?.id, product_name: selectedProduct?.name, size: selectedVariant?.size, rate: manualRate, quantity, amount: manualRate * quantity, unit: selectedProduct?.unit, company_name: companyName }]);
                      setShowAddItem(false);
                      setProductSearch('');
                    } else {

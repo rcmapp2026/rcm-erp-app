@@ -8,6 +8,17 @@ import { PermissionHandler } from '../PermissionHandler';
 import toast from 'react-hot-toast';
 import { ImageGenerator } from '../services/ImageGenerator';
 
+// Helper to convert base64 to Blob
+const base64toBlob = (base64Data: string, mimeType: string): Blob => {
+    const byteCharacters = atob(base64Data.split(',')[1]);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
+};
+
 const CollectionHub: React.FC = () => {
   const [dealers, setDealers] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
@@ -74,39 +85,29 @@ const CollectionHub: React.FC = () => {
         profileName: profile?.name || 'RCM ERP'
       });
       
+      // Optional: Upload backup to Supabase
+      try {
+        const blob = base64toBlob(generatedImageData, 'image/png');
+        const path = `reminders/reminder-${dealer.id}-${Date.now()}.png`;
+        await supabase.storage.from('products').upload(path, blob);
+      } catch (e) { console.warn("Cloud backup skipped", e); }
+
       let waText = '';
       if (mode === 'Standard') {
-        waText = `🔔 *PAYMENT REMINDER* 🔔
-
-Hello *${shopName}*,
-
-This is a friendly reminder that your balance of *₹${amountStr}* is outstanding.
-
-📍 *Pending Amount:* *₹${amountStr}* 💸
-⏳ *Remaining Time:* *${days} Days*
-
-_Sent via RCM ERP_ 🙏`;
+        waText = `🔔 *PAYMENT REMINDER* 🔔\n\nHello *${shopName}*,\n\nThis is a friendly reminder that your balance of *₹${amountStr}* is outstanding.\n\n📍 *Pending Amount:* *₹${amountStr}* 💸\n⏳ *Remaining Time:* *${days} Days*\n\n_Sent via RCM ERP_ 🙏`;
       } else { // Urgent
-        waText = `🚨*URGENT: PAYMENT OVERDUE*🚨
-
-Hello *${shopName}*,
-
-Your account has reached a *CRITICAL* state with an outstanding balance of *₹${amountStr}*.
-
-📍*Overdue Amount:* ₹${amountStr}🛑
-⚠️ *Status:* *URGENT ACTION REQUIRED*
-⏳ *Deadline:* *${days} Days*
-
-_Authorized by RCM ERP_ ⚠️`;
+        waText = `🚨*URGENT: PAYMENT OVERDUE*🚨\n\nHello *${shopName}*,\n\nYour account has reached a *CRITICAL* state with an outstanding balance of *₹${amountStr}*.\n\n📍*Overdue Amount:* ₹${amountStr}🛑\n⚠️ *Status:* *URGENT ACTION REQUIRED*\n⏳ *Deadline:* *${days} Days*\n\n_Authorized by RCM ERP_ ⚠️`;
       }
 
-      await PermissionHandler.shareImageAndText(generatedImageData, waText, dealer.mobile);
+      // FIX: Use shareImageAndText to share Image + Text together via Native Share
+      await PermissionHandler.shareImageAndText(generatedImageData, waText, 'Payment Reminder');
+      
       setSentLog(prev => ({ ...prev, [`${dealer.id}-${mode}`]: true }));
       toast.dismiss(toastId);
-      toast.success("Reminder Sent!");
+      toast.success("Ready to Share!");
     } catch (e) { 
       toast.dismiss(toastId); 
-      toast.error("Failed to send reminder."); 
+      toast.error("Failed to prepare reminder.");
       console.error(e);
     }
   };

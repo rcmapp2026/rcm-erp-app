@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { PermissionHandler } from '../PermissionHandler';
 import { CompanyProfile, Dealer, Order, LedgerEntry, Product, Category, Company } from '../types';
 import { PdfTemplates, formatMoney } from '../services/pdfService';
-import { SharingService } from '../services/sharingService';
+import { sharingService } from '../services/sharingService';
 
 declare global {
   interface Window {
@@ -153,14 +153,17 @@ const Reports: React.FC = () => {
       const pdfEngine = window.html2pdf().from(content).set(opt);
 
       if (mode === 'save') {
-        // Direct save is more reliable on mobile webviews via the library's internal trigger
         await pdfEngine.save();
         toast.success("Download started");
       } else {
         const pdfDataUri = await pdfEngine.output('datauristring');
-        const file = await SharingService.dataUriToFile(pdfDataUri, readyDoc.name);
         const title = mode === 'email' ? `Report: ${readyDoc.name}` : `RCM Hub: ${readyDoc.name}`;
-        await SharingService.share({ file, title });
+        await sharingService.share({
+          pdfUrl: pdfDataUri,
+          fileName: readyDoc.name,
+          title: title,
+          text: `Please find the attached report: ${readyDoc.name}`,
+        });
       }
 
       toast.dismiss(toastId);

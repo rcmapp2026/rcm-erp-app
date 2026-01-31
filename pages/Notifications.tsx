@@ -72,7 +72,7 @@ const Notifications: React.FC = () => {
         const dealer = dealers.find(d => d.id === selectedDealerId);
         if (dealer) {
           const waMsg = `*${payload.title}*\n\n${payload.message}\n\n— RCM Distribution Admin`;
-          PermissionHandler.openNativeWhatsApp(dealer.mobile, waMsg);
+          PermissionHandler.openWhatsApp(dealer.mobile, waMsg);
         }
       }
 
