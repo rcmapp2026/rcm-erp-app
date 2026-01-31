@@ -1,5 +1,5 @@
 
-import { Dealer } from './types';
+import { Dealer } from '../types';
 
 /**
  * Helper to wrap text into multiple lines
@@ -34,136 +34,145 @@ export const generateReminderImage = async (
   type: 'Standard' | 'Urgent',
   days: number = 3
 ): Promise<string> => {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) throw new Error("Canvas context failed");
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) throw new Error("Canvas context failed");
 
-  canvas.width = 800;
-  canvas.height = 1040;
+    canvas.width = 800;
+    canvas.height = 1040;
 
-  const isUrgent = type === 'Urgent';
-  const numericAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, '')) : amount;
+    const isUrgent = type === 'Urgent';
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, '')) : amount;
 
-  // COLOR PALETTE
-  const colorOrange = '#F97316';
-  const colorBlue = '#2563EB';
-  const colorRed = '#E31E24';
-  const colorOrangeDark = '#C2410C';
-  const colorBlueDark = '#1E3A8A';
-  const colorRedDark = '#991B1B';
-  const shopNameColor = '#E31E24';
-  const pillGradient = isUrgent ? ['#E31E24', '#FB7185'] : [colorBlue, '#60A5FA'];
+    // COLOR PALETTE
+    const colorOrange = '#F97316';
+    const colorBlue = '#2563EB';
+    const colorRed = '#E31E24';
+    const colorOrangeDark = '#C2410C';
+    const colorBlueDark = '#1E3A8A';
+    const colorRedDark = '#991B1B';
+    const shopNameColor = '#E31E24';
+    const pillGradient = isUrgent ? ['#E31E24', '#FB7185'] : [colorBlue, '#60A5FA'];
 
-  // 1. BACKGROUND
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, 800, 1040);
-  const bgGrad = ctx.createRadialGradient(400, 200, 0, 400, 200, 800);
-  bgGrad.addColorStop(0, '#ffffff');
-  bgGrad.addColorStop(1, '#f3f4f6');
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, 800, 1040);
+    // 1. BACKGROUND
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 800, 1040);
+    const bgGrad = ctx.createRadialGradient(400, 200, 0, 400, 200, 800);
+    bgGrad.addColorStop(0, '#ffffff');
+    bgGrad.addColorStop(1, '#f3f4f6');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 800, 1040);
 
-  // 2. 3D RCM LOGO
-  ctx.save();
-  ctx.translate(400, 150);
-  ctx.font = 'italic 900 180px "Inter", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+    // 2. 3D RCM LOGO
+    ctx.save();
+    ctx.translate(400, 150);
+    ctx.font = 'italic 900 180px sans-serif'; // Removed "Inter" to avoid loading issues in APK
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-  ctx.shadowBlur = 30;
-  ctx.shadowOffsetY = 20;
-  ctx.fillText('RCM', 0, 0);
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 0;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    ctx.shadowBlur = 30;
+    ctx.shadowOffsetY = 20;
+    ctx.fillText('RCM', 0, 0);
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
 
-  const depth = 14;
-  for (let i = depth; i > 0; i--) {
-    const cycle = i % 6;
-    if (cycle < 2) ctx.fillStyle = colorOrangeDark;
-    else if (cycle < 4) ctx.fillStyle = colorBlueDark;
-    else ctx.fillStyle = colorRedDark;
-    ctx.fillText('RCM', i, i);
+    const depth = 14;
+    for (let i = depth; i > 0; i--) {
+      const cycle = i % 6;
+      if (cycle < 2) ctx.fillStyle = colorOrangeDark;
+      else if (cycle < 4) ctx.fillStyle = colorBlueDark;
+      else ctx.fillStyle = colorRedDark;
+      ctx.fillText('RCM', i, i);
+    }
+
+    const textGrad = ctx.createLinearGradient(0, -80, 0, 80);
+    textGrad.addColorStop(0, '#fbbf24');
+    textGrad.addColorStop(0.3, colorOrange);
+    textGrad.addColorStop(0.6, colorBlue);
+    textGrad.addColorStop(1, colorRed);
+    ctx.fillStyle = textGrad;
+    ctx.fillText('RCM', 0, 0);
+    ctx.restore();
+
+    // 3. DEALER NAME - Wrapped correctly
+    ctx.font = '900 62px sans-serif';
+    ctx.fillStyle = shopNameColor;
+    ctx.textAlign = 'center';
+    const shopName = (dealer.shop_name || '').toUpperCase();
+    wrapText(ctx, shopName, 400, 320, 720, 70);
+
+    // Diamond Separator
+    ctx.save();
+    ctx.translate(400, 460);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = '#E31E24';
+    ctx.fillRect(-12, -12, 24, 24);
+    ctx.restore();
+
+    // 4. LABEL
+    ctx.font = '800 34px sans-serif';
+    ctx.fillStyle = '#6B7280';
+    ctx.fillText('TOTAL OUTSTANDING DUES', 400, 520);
+
+    // 5. AMOUNT - Dynamic Scaling
+    const amountStr = `₹${numericAmount.toLocaleString('en-IN')}`;
+    let fontSize = 160;
+    ctx.font = `900 ${fontSize}px sans-serif`;
+    while (ctx.measureText(amountStr).width > 720 && fontSize > 80) {
+      fontSize -= 5;
+      ctx.font = `900 ${fontSize}px sans-serif`;
+    }
+    const amountY = 660;
+    const amtGrad = ctx.createLinearGradient(150, amountY, 650, amountY);
+    amtGrad.addColorStop(0, colorBlue);
+    amtGrad.addColorStop(1, colorRed);
+    ctx.fillStyle = amtGrad;
+    ctx.fillText(amountStr, 400, amountY);
+
+    // 6. STATUS PILL
+    const pillY = 780;
+    const pillWidth = 660;
+    const pillHeight = 100;
+    const pillX = 400 - pillWidth / 2;
+    ctx.shadowBlur = 40;
+    ctx.shadowColor = isUrgent ? 'rgba(227, 30, 36, 0.35)' : 'rgba(37, 99, 235, 0.35)';
+    ctx.shadowOffsetY = 15;
+    const pGrad = ctx.createLinearGradient(pillX, pillY, pillX + pillWidth, pillY);
+    pGrad.addColorStop(0, pillGradient[0]);
+    pGrad.addColorStop(1, pillGradient[1]);
+    ctx.fillStyle = pGrad;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+       ctx.roundRect(pillX, pillY, pillWidth, pillHeight, 50);
+    } else {
+       ctx.rect(pillX, pillY, pillWidth, pillHeight);
+    }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 42px sans-serif';
+    const pillText = isUrgent ? `⚠️ ONLY ${days} DAYS LEFT!` : `PAYMENT PENDING ⏳`;
+    ctx.fillText(pillText, 400, pillY + 62);
+
+    // 7. FOOTER
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+    ctx.globalAlpha = 1.0;
+    ctx.fillStyle = isUrgent ? colorRed : colorBlue;
+    ctx.font = 'italic 900 50px serif';
+    ctx.fillText(isUrgent ? 'URGENT PAYMENT REQUIRED!' : 'Thanks for business with us!', 400, 940);
+    ctx.font = '85px Arial, sans-serif';
+    const footerEmojis = isUrgent ? '🚨   ⏳   ⚠️' : '😊   🤝   ❤️';
+    ctx.fillText(footerEmojis, 400, 1020);
+
+    return canvas.toDataURL('image/png', 1.0);
+  } catch (e) {
+    console.error("Canvas error:", e);
+    return '';
   }
-
-  const textGrad = ctx.createLinearGradient(0, -80, 0, 80);
-  textGrad.addColorStop(0, '#fbbf24');
-  textGrad.addColorStop(0.3, colorOrange);
-  textGrad.addColorStop(0.6, colorBlue);
-  textGrad.addColorStop(1, colorRed);
-  ctx.fillStyle = textGrad;
-  ctx.fillText('RCM', 0, 0);
-  ctx.restore();
-
-  // 3. DEALER NAME - Wrapped correctly
-  ctx.font = '900 62px "Inter", sans-serif';
-  ctx.fillStyle = shopNameColor;
-  ctx.textAlign = 'center';
-  const shopName = (dealer.shop_name || '').toUpperCase();
-  wrapText(ctx, shopName, 400, 320, 720, 70);
-
-  // Diamond Separator
-  ctx.save();
-  ctx.translate(400, 460);
-  ctx.rotate(Math.PI / 4);
-  ctx.fillStyle = '#E31E24';
-  ctx.fillRect(-12, -12, 24, 24);
-  ctx.restore();
-
-  // 4. LABEL
-  ctx.font = '800 34px "Inter", sans-serif';
-  ctx.fillStyle = '#6B7280';
-  ctx.fillText('TOTAL OUTSTANDING DUES', 400, 520);
-
-  // 5. AMOUNT - Dynamic Scaling
-  const amountStr = `₹${numericAmount.toLocaleString('en-IN')}`;
-  let fontSize = 160;
-  ctx.font = `900 ${fontSize}px "Inter", sans-serif`;
-  while (ctx.measureText(amountStr).width > 720 && fontSize > 80) {
-    fontSize -= 5;
-    ctx.font = `900 ${fontSize}px "Inter", sans-serif`;
-  }
-  const amountY = 660;
-  const amtGrad = ctx.createLinearGradient(150, amountY, 650, amountY);
-  amtGrad.addColorStop(0, colorBlue);
-  amtGrad.addColorStop(1, colorRed);
-  ctx.fillStyle = amtGrad;
-  ctx.fillText(amountStr, 400, amountY);
-
-  // 6. STATUS PILL
-  const pillY = 780;
-  const pillWidth = 660;
-  const pillHeight = 100;
-  const pillX = 400 - pillWidth / 2;
-  ctx.shadowBlur = 40;
-  ctx.shadowColor = isUrgent ? 'rgba(227, 30, 36, 0.35)' : 'rgba(37, 99, 235, 0.35)';
-  ctx.shadowOffsetY = 15;
-  const pGrad = ctx.createLinearGradient(pillX, pillY, pillX + pillWidth, pillY);
-  pGrad.addColorStop(0, pillGradient[0]);
-  pGrad.addColorStop(1, pillGradient[1]);
-  ctx.fillStyle = pGrad;
-  ctx.beginPath();
-  ctx.roundRect(pillX, pillY, pillWidth, pillHeight, 50);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 0;
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '900 42px "Inter", sans-serif';
-  const pillText = isUrgent ? `⚠️ ONLY ${days} DAYS LEFT!` : `PAYMENT PENDING ⏳`;
-  ctx.fillText(pillText, 400, pillY + 62);
-
-  // 7. FOOTER - Reset Shadow for Sharpness
-  ctx.shadowBlur = 0;
-  ctx.shadowColor = 'transparent';
-  ctx.globalAlpha = 1.0;
-  ctx.fillStyle = isUrgent ? colorRed : colorBlue;
-  ctx.font = 'italic 900 50px "Playfair Display", serif';
-  ctx.fillText(isUrgent ? 'URGENT PAYMENT REQUIRED!' : 'Thanks for business with us!', 400, 940);
-  ctx.font = '85px Arial, sans-serif';
-  const footerEmojis = isUrgent ? '🚨   ⏳   ⚠️' : '😊   🤝   ❤️';
-  ctx.fillText(footerEmojis, 400, 1020);
-
-  return canvas.toDataURL('image/png', 1.0);
 };
 
 // Compatibility for Ledger.tsx
