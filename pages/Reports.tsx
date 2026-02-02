@@ -135,20 +135,43 @@ const Reports: React.FC = () => {
     window.scrollTo(0,0);
 
     const workerDiv = document.createElement('div');
-    Object.assign(workerDiv.style, { position: 'absolute', left: '0', top: '0', width: '210mm', backgroundColor: '#fff', zIndex: '-1', opacity: '1', pointerEvents: 'none' });
+    // Using a more robust positioning for mobile capture
+    Object.assign(workerDiv.style, {
+      position: 'fixed',
+      left: '-9999px',
+      top: '0',
+      width: '794px', // 210mm at 96 DPI
+      backgroundColor: '#ffffff',
+      zIndex: '-1',
+      opacity: '1'
+    });
     workerDiv.innerHTML = readyDoc.html;
     document.body.appendChild(workerDiv);
 
     try {
+      // Force font loading
+      if ((document as any).fonts) {
+        await (document as any).fonts.ready;
+      }
+
       const images = Array.from(workerDiv.getElementsByTagName('img'));
       await Promise.all(images.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; })));
-      await new Promise(r => setTimeout(r, 2000));
+
+      // Additional wait for any CSS/Layout shifts
+      await new Promise(r => setTimeout(r, 1000));
 
       const opt = {
-        margin: [10, 10, 20, 10], // Adjusted bottom margin to 20 to prevent cutting
+        margin: [0, 0, 0, 0], // Margins handled in CSS
         filename: readyDoc.name,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', windowWidth: 794 },
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: {
+          scale: 3, // Higher scale for mobile clarity
+          useCORS: true,
+          logging: false,
+          letterRendering: true,
+          backgroundColor: '#ffffff',
+          windowWidth: 794
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true, precision: 16 }
       };
 
@@ -159,9 +182,9 @@ const Reports: React.FC = () => {
         await pdfEngine.save();
         toast.success("Download started");
       } else {
+        const pdfBlob = await pdfEngine.output('blob');
         const pdfDataUri = await pdfEngine.output('datauristring');
 
-        // WhatsApp Formatting: *Text* for Bold, _Text_ for Italic. Use \n\n for sections.
         let waText = `📄 *DOCUMENT SHARED*\n\n*Type:* _${readyDoc.type}_\n*File:* ${readyDoc.name}\n\nPlease find the attached report.`;
 
         if (readyDoc.type === 'Invoice' && readyDoc.dealer) {
@@ -171,8 +194,6 @@ const Reports: React.FC = () => {
         }
 
         const title = mode === 'email' ? `Report: ${readyDoc.name}` : `RCM Hub: ${readyDoc.name}`;
-
-        // Include dealer mobile if available to open their WhatsApp chat
         const dealerMobile = readyDoc.dealer?.mobile || (readyDoc.dealer?.dealers?.mobile);
 
         await sharingService.share({
@@ -186,6 +207,7 @@ const Reports: React.FC = () => {
 
       toast.dismiss(toastId);
     } catch (err) {
+      console.error(err);
       toast.dismiss(toastId);
       toast.error("Export Failed. Retry.");
     } finally {

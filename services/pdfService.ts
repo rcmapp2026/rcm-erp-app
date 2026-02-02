@@ -12,7 +12,7 @@ export const toINR = (val: number) => val.toLocaleString('en-IN', { minimumFract
  */
 export const PdfTemplates = {
   wrapHtml: (html: string) => `
-    <div id="pdf-rendering-root" style="width: 210mm; background: #fff; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; display: block; position: relative;">
+    <div id="pdf-rendering-root" style="width: 210mm; background: #fff; margin: 0 auto; padding: 0; box-sizing: border-box; overflow: hidden; display: block; position: relative;">
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap');
 
@@ -26,20 +26,18 @@ export const PdfTemplates = {
 
         #pdf-rendering-root {
           background: #fff;
-          margin: 0;
+          margin: 0 auto;
           padding: 0;
           width: 210mm;
           font-family: 'Inter', sans-serif;
-        }
-
-        div {
-          page-break-inside: avoid;
+          color: #000;
+          line-height: 1.3;
         }
 
         .pdf-page {
           width: 210mm;
-          height: 297mm; /* Standard A4 Height */
-          padding: 12mm;
+          min-height: 295mm; /* Reduced to prevent blank pages on mobile */
+          padding: 12mm 10mm;
           position: relative;
           box-sizing: border-box;
           background: #fff;
@@ -53,11 +51,16 @@ export const PdfTemplates = {
           page-break-after: avoid !important;
         }
 
+        .summary-box, .cert-container, header, table {
+          page-break-inside: avoid !important;
+        }
+
         table {
           width: 100% !important;
           border-collapse: collapse;
           table-layout: fixed;
           border: 1.5px solid #CDA434;
+          margin-bottom: 5px;
         }
 
         th {
@@ -65,18 +68,19 @@ export const PdfTemplates = {
           color: #fff !important;
           font-weight: 900 !important;
           text-transform: uppercase;
-          font-size: 10px;
-          padding: 10px 8px;
+          font-size: 9px; /* Unified font size */
+          padding: 9px 7px;
           border: 1px solid #CDA434;
           text-align: center;
         }
 
         td {
           border: 1px solid #CDA434;
-          padding: 8px 10px;
-          font-size: 10px;
+          padding: 7px 9px;
+          font-size: 9px; /* Unified font size */
           vertical-align: middle;
           word-wrap: break-word;
+          overflow-wrap: break-word;
           color: #000;
           font-weight: 700;
         }
@@ -102,12 +106,12 @@ export const PdfTemplates = {
             background: #f8fafc !important;
             color: #64748b !important;
             border: 1px solid #e2e8f0;
-            font-size: 8px;
-            padding: 4px;
+            font-size: 7px;
+            padding: 3px;
         }
         .variant-table td {
             border: 1px solid #e2e8f0;
-            padding: 5px;
+            padding: 4px;
             font-weight: 900;
             text-align: center;
             vertical-align: middle !important;
@@ -168,8 +172,8 @@ export const PdfTemplates = {
                    <span style="font-weight: 900; font-size: 13px; color: #0F172A;">+91 ${dealer.mobile}</span>
                 </div>
                 <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Cheque No.</span>
-                   <span style="font-weight: 900; font-size: 13px; color: #2563EB;">${dealer.cheque_no || 'NOT PROVIDED'}</span>
+                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">City</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; text-transform: uppercase;">${dealer.city || 'N/A'}</span>
                 </div>
                 <div style="display: flex; border-bottom: 1.5 solid #F1F5F9; padding-bottom: 6px;">
                    <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registry No.</span>
@@ -258,7 +262,7 @@ export const PdfTemplates = {
              <h2 style="font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 5px; color: #000;">${assetType} STOCK REGISTRY</h2>
              <p style="font-size: 8px; font-weight: 900; color: #64748b; margin-top: 2px;">OFFICIAL INVENTORY LOG | PAGE ${p + 1} OF ${pagesCount}</p>
           </header>
-          <table style="table-layout: fixed;">
+          <table>
             <thead>
               <tr>
                 <th style="width: 40px;">SN</th>
@@ -274,10 +278,6 @@ export const PdfTemplates = {
   },
 
   generateInvoiceHtml: (order: Order, items: any[], profile: CompanyProfile) => {
-     /**
-      * Pagination Fix:
-      * Setting itemsPerPage to 14 to allow enough space for header and summary on the same page without overflow.
-      */
      const itemsPerPage = 14;
      const pagesCount = Math.ceil(items.length / itemsPerPage);
      let htmlContent = '';
@@ -291,15 +291,15 @@ export const PdfTemplates = {
          <tr>
            <td style="width: 45px; text-align: center; font-weight: 900;">${startIdx + idx + 1}</td>
            <td style="padding-left: 15px;">
-             <div style="font-weight: 900; font-size: 11px; text-transform: uppercase;">${i.product_name}</div>
-             <div style="font-size: 8px; color: #666; font-weight: 900; margin-top: 2px;">BRAND: ${i.company_name || 'RCM'}</div>
+             <div style="font-weight: 900; font-size: 10px; text-transform: uppercase;">${i.product_name}</div>
+             <div style="font-size: 7px; color: #666; font-weight: 900; margin-top: 2px;">BRAND: ${i.company_name || 'RCM'}</div>
            </td>
-           <td style="width: 84px; text-align: center; font-weight: 900;">${i.variant_info || i.size || 'N/A'}</td>
+           <td style="width: 84px; text-align: center; font-weight: 900; font-size: 9px;">${i.variant_info || i.size || 'N/A'}</td>
            <td style="width: 75px; text-align: center; font-weight: 900;">
-             <span style="font-size: 11px; font-weight: 900;">${i.quantity}</span> <span style="font-size: 8px; color: #999; font-weight: 900;">${i.unit || 'PCS'}</span>
+             <span style="font-size: 10px; font-weight: 900;">${i.quantity}</span> <span style="font-size: 7px; color: #999; font-weight: 900;">${i.unit || 'PCS'}</span>
            </td>
-           <td style="width: 95px; text-align: right; font-weight: 900;">₹${toINR(Number(i.rate))}</td>
-           <td style="width: 110px; text-align: right; font-weight: 900;">₹${toINR(Number(i.amount))}</td>
+           <td style="width: 95px; text-align: right; font-weight: 900; font-size: 9px;">₹${toINR(Number(i.rate))}</td>
+           <td style="width: 110px; text-align: right; font-weight: 900; font-size: 9px;">₹${toINR(Number(i.amount))}</td>
          </tr>`).join('');
 
        const upiLink = `upi://pay?pa=${profile.upi_id}&pn=${encodeURIComponent(profile.name)}&am=${Number(order.final_total).toFixed(2)}&cu=INR&mode=02`;
@@ -311,34 +311,34 @@ export const PdfTemplates = {
              <div style="border: 2.5px solid #CDA434; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #fff; margin-bottom: 15px;">
                 <div>
                    <div class="rcm-logo"><span class="rcm-r">R</span><span class="rcm-c">C</span><span class="rcm-m">M</span></div>
-                   <div style="font-size: 12px; font-weight: 900; text-transform: uppercase; margin-top: 5px; color: #000;">RCM HARDWARE</div>
+                   <div style="font-size: 11px; font-weight: 900; text-transform: uppercase; margin-top: 5px; color: #000;">RCM HARDWARE</div>
                 </div>
                 <div style="text-align: right;">
-                   <h2 style="font-size: 22px; font-weight: 900; text-transform: uppercase; margin: 0; color: #000;">DEALER INVOICE</h2>
-                   <p style="font-size: 10px; font-weight: 900; margin-top: 5px;">PAGE ${p + 1} OF ${pagesCount}</p>
-                   <p style="font-size: 10px; font-weight: 900;">ORD NO: #${order.order_no}</p>
+                   <h2 style="font-size: 20px; font-weight: 900; text-transform: uppercase; margin: 0; color: #000;">DEALER INVOICE</h2>
+                   <p style="font-size: 9px; font-weight: 900; margin-top: 5px;">PAGE ${p + 1} OF ${pagesCount}</p>
+                   <p style="font-size: 9px; font-weight: 900;">ORD NO: #${order.order_no}</p>
                 </div>
              </div>
              <div style="display: flex; gap: 15px;">
                 <div style="flex: 1; border: 1.5px solid #CDA434; padding: 12px;">
-                   <p style="font-weight: 900; color: #CDA434; font-size: 9px; text-transform: uppercase; margin-bottom: 4px;">FROM:</p>
-                   <p style="font-weight: 900; font-size: 11px;">${profile.name}</p>
-                   <p style="font-size: 9px; font-weight: 900;">${profile.address}</p>
-                   <p style="font-size: 9px; font-weight: 900; margin-top: 2px;">MOB: ${profile.mobile}</p>
-                   <p style="font-size: 9px; font-weight: 900; margin-top: 4px; color: #2563EB;">EMAIL: rcmhardware@gmail.com</p>
+                   <p style="font-weight: 900; color: #CDA434; font-size: 8px; text-transform: uppercase; margin-bottom: 4px;">FROM:</p>
+                   <p style="font-weight: 900; font-size: 10px;">${profile.name}</p>
+                   <p style="font-size: 8px; font-weight: 900;">${profile.address}</p>
+                   <p style="font-size: 8px; font-weight: 900; margin-top: 2px;">MOB: ${profile.mobile}</p>
+                   <p style="font-size: 8px; font-weight: 900; margin-top: 4px; color: #2563EB;">EMAIL: rcmhardware@gmail.com</p>
                 </div>
                 <div style="flex: 1; border: 1.5px solid #CDA434; padding: 12px;">
-                   <p style="font-weight: 900; color: #CDA434; font-size: 9px; text-transform: uppercase; margin-bottom: 4px;">TO DEALER:</p>
-                   <p style="font-weight: 900; font-size: 11px; text-transform: uppercase;">${order.dealers?.shop_name || 'N/A'}</p>
-                   <p style="font-size: 9px; font-weight: 900; margin-top: 4px;">NAME: ${order.dealers?.owner_name || 'N/A'}</p>
-                   <p style="font-size: 9px; font-weight: 900;">CODE: ${order.dealers?.dealer_code || 'N/A'}</p>
-                   <p style="font-size: 9px; font-weight: 900;">MOB: +91 ${order.dealers?.mobile || 'N/A'}</p>
-                   <p style="font-size: 9px; font-weight: 900; margin-top: 4px; line-height: 1.2;">ADD: ${order.dealers?.address || 'N/A'}, ${order.dealers?.city || ''}</p>
+                   <p style="font-weight: 900; color: #CDA434; font-size: 8px; text-transform: uppercase; margin-bottom: 4px;">TO DEALER:</p>
+                   <p style="font-weight: 900; font-size: 10px; text-transform: uppercase;">${order.dealers?.shop_name || 'N/A'}</p>
+                   <p style="font-size: 8px; font-weight: 900; margin-top: 4px;">NAME: ${order.dealers?.owner_name || 'N/A'}</p>
+                   <p style="font-size: 8px; font-weight: 900;">CODE: ${order.dealers?.dealer_code || 'N/A'}</p>
+                   <p style="font-size: 8px; font-weight: 900;">MOB: +91 ${order.dealers?.mobile || 'N/A'}</p>
+                   <p style="font-size: 8px; font-weight: 900; margin-top: 4px; line-height: 1.2;">ADD: ${order.dealers?.address || 'N/A'}, ${order.dealers?.city || ''}</p>
                 </div>
              </div>
            </header>
 
-           <div style="flex-grow: 1;">
+           <div style="flex: 1;">
              <table>
                <thead>
                  <tr>
@@ -352,25 +352,29 @@ export const PdfTemplates = {
                </thead>
                <tbody>${rowsHtml}</tbody>
              </table>
+
+             ${isLastPage ? `
+               <div class="summary-box" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                 <div style="width: 35%; border: 2.5px solid #CDA434; padding: 15px; text-align: center;">
+                    <img src="${qrUrl}" style="width: 100px; height: 100px; display: block; margin: 0 auto;" />
+                    <p style="font-size: 8px; font-weight: 900; margin-top: 8px;">SCAN TO PAY: ₹${toINR(Number(order.final_total))}</p>
+                 </div>
+                 <div style="width: 60%; border: 3px solid #CDA434; padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; margin-bottom: 4px;"><span>SUBTOTAL:</span><span>₹${toINR(Number(order.subtotal))}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; margin-bottom: 4px;"><span>TRANSPORT (+):</span><span>₹${toINR(Number(order.transport_charges))}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; margin-bottom: 8px;"><span>DISCOUNT (-):</span><span>₹${toINR(Number(order.discount))}</span></div>
+                    <div style="display: flex; justify-content: space-between; border-top: 3px solid #CDA434; padding-top: 8px;">
+                       <span style="font-weight: 900; font-size: 13px; color: #DC2626;">NET PAYABLE:</span>
+                       <span style="font-weight: 900; font-size: 18px; color: #DC2626;">₹${toINR(Number(order.final_total))}</span>
+                    </div>
+                 </div>
+               </div>
+             ` : `<div style="margin-top: 10px; text-align: right; font-weight: 900; color: #999; font-size: 9px; font-style: italic;">Continued on next page...</div>`}
            </div>
 
-           ${isLastPage ? `
-             <div class="summary-box" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-               <div style="width: 35%; border: 2.5px solid #CDA434; padding: 15px; text-align: center;">
-                  <img src="${qrUrl}" style="width: 100px; height: 100px; display: block; margin: 0 auto;" />
-                  <p style="font-size: 9px; font-weight: 900; margin-top: 8px;">SCAN TO PAY: ₹${toINR(Number(order.final_total))}</p>
-               </div>
-               <div style="width: 60%; border: 3px solid #CDA434; padding: 15px;">
-                  <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 900; margin-bottom: 4px;"><span>SUBTOTAL:</span><span>₹${toINR(Number(order.subtotal))}</span></div>
-                  <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 900; margin-bottom: 4px;"><span>TRANSPORT (+):</span><span>₹${toINR(Number(order.transport_charges))}</span></div>
-                  <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 900; margin-bottom: 8px;"><span>DISCOUNT (-):</span><span>₹${toINR(Number(order.discount))}</span></div>
-                  <div style="display: flex; justify-content: space-between; border-top: 3px solid #CDA434; padding-top: 8px;">
-                     <span style="font-weight: 900; font-size: 14px; color: #DC2626;">NET PAYABLE:</span>
-                     <span style="font-weight: 900; font-size: 20px; color: #DC2626;">₹${toINR(Number(order.final_total))}</span>
-                  </div>
-               </div>
-             </div>
-           ` : `<div style="margin-top: 10px; text-align: right; font-weight: 900; color: #999; font-size: 10px; font-style: italic;">Continued on next page...</div>`}
+           <footer style="margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; text-align: center;">
+              <p style="font-size: 8px; font-weight: 900; color: #666; text-transform: uppercase;">Computer Generated Invoice | Authorized Signature Not Required</p>
+           </footer>
          </div>`;
      }
      return htmlContent;
@@ -378,7 +382,7 @@ export const PdfTemplates = {
 
 
   generateLedgerHtml: (dealer: Dealer, logs: LedgerEntry[], openingBal: number, profile: CompanyProfile, fromDate: string, toDate: string) => {
-    const itemsPerPage = 20;
+    const itemsPerPage = 17; // Reduced to prevent blank pages
     const allRows: any[] = [];
     let rb = openingBal;
     let tDebit = 0;
@@ -436,20 +440,24 @@ export const PdfTemplates = {
             </div>
           </header>
 
-          <div style="flex-grow: 1;">
-            <table style="margin-bottom: 0;">
+          <div style="flex: 1;">
+            <table>
               <thead><tr><th style="width: 35px;">#</th><th style="width: 80px;">DATE</th><th style="text-align: left; padding-left: 10px;">DESCRIPTION</th><th style="width: 105px;">DEBIT(-)</th><th style="width: 105px;">CREDIT(+)</th><th style="width: 120px;">BALANCE</th></tr></thead>
               <tbody>${rowsHtml}</tbody>
             </table>
+
+            ${isLastPage ? `
+              <div style="margin-top: 15px; border: 3px solid #CDA434; padding: 15px; display: flex; justify-content: space-between; background: #fdfae6; page-break-inside: avoid;">
+                <div style="text-align: center; flex: 1;"><div style="font-size: 10px; font-weight: 900; color: #DC2626; text-transform: uppercase;">DR TOTAL</div><div style="font-size: 12px; font-weight: 900;">₹${toINR(tDebit)}</div></div>
+                <div style="text-align: center; flex: 1; border-left: 1.5px solid #CDA434; border-right: 1.5px solid #CDA434;"><div style="font-size: 10px; font-weight: 900; color: #059669; text-transform: uppercase;">CR TOTAL</div><div style="font-size: 12px; font-weight: 900;">₹${toINR(tCredit)}</div></div>
+                <div style="text-align: center; flex: 1;"><div style="font-size: 11px; font-weight: 900; text-transform: uppercase; color: #1E40AF;">NET OUTSTANDING</div><div style="font-size: 18px; font-weight: 900; color: #1E40AF;">₹${toINR(Number(rb))}</div></div>
+              </div>
+            ` : ``}
           </div>
 
-          ${isLastPage ? `
-            <div style="margin-top: 10px; border: 3px solid #CDA434; padding: 15px; display: flex; justify-content: space-between; background: #fdfae6;">
-              <div style="text-align: center; flex: 1;"><div style="font-size: 10px; font-weight: 900; color: #DC2626; text-transform: uppercase;">DR TOTAL</div><div style="font-size: 12px; font-weight: 900;">₹${toINR(tDebit)}</div></div>
-              <div style="text-align: center; flex: 1; border-left: 1.5px solid #CDA434; border-right: 1.5px solid #CDA434;"><div style="font-size: 10px; font-weight: 900; color: #059669; text-transform: uppercase;">CR TOTAL</div><div style="font-size: 12px; font-weight: 900;">₹${toINR(tCredit)}</div></div>
-              <div style="text-align: center; flex: 1;"><div style="font-size: 11px; font-weight: 900; text-transform: uppercase; color: #1E40AF;">NET OUTSTANDING</div><div style="font-size: 18px; font-weight: 900; color: #1E40AF;">₹${toINR(Number(rb))}</div></div>
-            </div>
-          ` : `<div style="margin-top: 10px; text-align: right; font-weight: 900; color: #999; font-size: 10px; font-style: italic;">...Continued on next page</div>`}
+          <footer style="margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; text-align: center;">
+             <p style="font-size: 8px; font-weight: 900; color: #666; text-transform: uppercase;">This is a system generated statement | Official Business Record</p>
+          </footer>
         </div>`;
     }
     return htmlContent;

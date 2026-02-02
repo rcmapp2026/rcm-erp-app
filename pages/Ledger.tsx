@@ -118,7 +118,7 @@ const Ledger: React.FC = () => {
       const urls = [...(txForm.images || [])];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const path = `ledger/tx-${Date.now()}-${i}.png`;
+        const path = `ledger/tx-${Date.now()}-${ i}.png`;
         await supabase.storage.from('products').upload(path, file);
         const { data } = supabase.storage.from('products').getPublicUrl(path);
         urls.push(data.publicUrl);
@@ -148,9 +148,9 @@ const Ledger: React.FC = () => {
 
       let waText = '';
       if (mode === 'Standard') {
-        waText = `🔔 *PAYMENT REMINDER* 🔔\n\nHello *${shopName}*,\n\nThis is a friendly reminder that your balance of *₹${amountStr}* is outstanding.\n\n📍 *Pending Amount:* *₹${amountStr}* 💸\n⏳ *Remaining Time:* *${days} Days*\n\nPlease process the payment via UPI to avoid account suspension.\n\n_Sent via RCM ERP_ 🙏`;
+        waText = `🔔 *PAYMENT REMINDER*\n\nHello *${shopName}*,\nThis is a friendly reminder that your balance of *₹${amountStr}* is outstanding.\n\n💰 *Amount:* ₹${amountStr} 💸\n⏳ *Time Left:* ${days} Days\n\nPlease process the payment via UPI to avoid account suspension.\n\n_Sent via RCM ERP_ 🙏`;
       } else { // Urgent
-        waText = `🚨 *URGENT: PAYMENT OVERDUE* 🚨\n\nHello *${shopName}*,\n\nYour account has reached a *CRITICAL* state with an outstanding balance of *₹${amountStr}*.\n\n📍 *Overdue Amount:* ₹${amountStr} 🛑\n⚠️ *Status:* *IMMEDIATE ACTION REQUIRED*\n⏳ *Deadline:* *OVERDUE / SUSPENSION*\n\nPlease settle this amount immediately via UPI.\n\n_Authorized by RCM ERP_ ⚠️`;
+        waText = `🚨 *URGENT: PAYMENT OVERDUE*\n\nHello *${shopName}*,\nYour account is in a *CRITICAL* state with an outstanding balance of *₹${amountStr}*.\n\n📍 *Balance:* ₹${amountStr} 🛑\n⚠️ *Status:* IMMEDIATE ACTION REQUIRED\n⏳ *Deadline:* OVERDUE / SUSPENSION\n\nPlease settle this amount immediately via UPI.\n\n_Authorized by RCM ERP_ ⚠️`;
       }
 
       const fileName = `Reminder_${dealer.shop_name.replace(/\s+/g, '_')}_${mode}.png`;
