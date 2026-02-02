@@ -5,7 +5,7 @@ import {
   Save, Loader2, Building2, Smartphone, 
   CreditCard, ShieldCheck, MessageSquare, 
   RefreshCcw, Type, Palette, Layout, User, 
-  Clock, AlertTriangle, Eye, Settings2, Copy, Check, Zap, Camera, ImageIcon
+  Clock, AlertTriangle, Eye, Settings2, Copy, Check, Zap, Camera, ImageIcon, MapPin
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CompanyProfile } from '../types';
@@ -16,25 +16,38 @@ const Account: React.FC = () => {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   
   useEffect(() => {
-    supabase.from('company_profile').select('*').limit(1).single().then(({data}) => {
-      if (data) {
-        setProfile(data);
-      }
-      setLoading(false);
-    });
+    fetchProfile();
   }, []);
+
+  const fetchProfile = async () => {
+    const { data } = await supabase.from('company_profile').select('*').limit(1).maybeSingle();
+    if (data) {
+      setProfile(data);
+    }
+    setLoading(false);
+  };
 
   const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
+    const toastId = toast.loading("Syncing with Global Hub...");
     try {
       const { error } = await supabase.from('company_profile').update({
         name: profile.name.toUpperCase(),
         upi_id: profile.upi_id,
+        mobile: profile.mobile,
+        address: profile.address,
+        alert_threshold_days: Number(profile.alert_threshold_days) || 15
       }).eq('id', profile.id);
+
       if (error) throw error;
-      toast.success("Identity Node Protocol Synced ✅");
-    } catch (e) { toast.error("Global Transmission Fail"); }
+
+      toast.success("Identity Node Protocol Synced ✅", { id: toastId });
+      fetchProfile(); // Refresh local state
+    } catch (e) {
+      console.error(e);
+      toast.error("Global Transmission Fail", { id: toastId });
+    }
     finally { setSaving(false); }
   };
 
@@ -54,14 +67,31 @@ const Account: React.FC = () => {
               <label className="text-[9px] font-black text-gray-400 uppercase italic ml-2">Authorized Brand Label</label>
               <input value={profile?.name || ''} className="w-full p-4 border-2 border-slate-100 rounded-xl font-black uppercase italic outline-none focus:border-blue-600 transition-all" onChange={e => setProfile(p => p ? {...p, name: e.target.value} : null)} />
            </div>
+
+           <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                 <label className="text-[9px] font-black text-gray-400 uppercase italic ml-2">Support Number</label>
+                 <input value={profile?.mobile || ''} className="w-full p-4 border-2 border-slate-100 rounded-xl font-black italic outline-none focus:border-blue-600 transition-all" onChange={e => setProfile(p => p ? {...p, mobile: e.target.value} : null)} />
+              </div>
+              <div className="space-y-1">
+                 <label className="text-[9px] font-black text-gray-400 uppercase italic ml-2">Alert Threshold (Days)</label>
+                 <input type="number" value={profile?.alert_threshold_days || ''} className="w-full p-4 border-2 border-slate-100 rounded-xl font-black italic outline-none focus:border-blue-600 transition-all" onChange={e => setProfile(p => p ? {...p, alert_threshold_days: Number(e.target.value)} : null)} />
+              </div>
+           </div>
+
            <div className="space-y-1">
               <label className="text-[9px] font-black text-gray-400 uppercase italic ml-2">UPI Node Endpoint</label>
               <input value={profile?.upi_id || ''} className="w-full p-4 border-2 border-slate-100 rounded-xl font-black italic outline-none focus:border-blue-600 transition-all" onChange={e => setProfile(p => p ? {...p, upi_id: e.target.value} : null)} />
            </div>
+
+           <div className="space-y-1">
+              <label className="text-[9px] font-black text-gray-400 uppercase italic ml-2">Logistics Hub Address</label>
+              <textarea rows={3} value={profile?.address || ''} className="w-full p-4 border-2 border-slate-100 rounded-xl font-black italic outline-none focus:border-blue-600 transition-all resize-none" onChange={e => setProfile(p => p ? {...p, address: e.target.value} : null)} />
+           </div>
         </div>
       </div>
 
-      <button onClick={handleSave} className="w-full py-8 bg-black text-white rounded-[3.5rem] font-black uppercase italic tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all">
+      <button onClick={handleSave} disabled={saving} className="w-full py-8 bg-black text-white rounded-[3.5rem] font-black uppercase italic tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-50">
         {saving ? <Loader2 className="animate-spin" /> : <ShieldCheck size={32}/>} AUTHORIZE GLOBAL SYNC
       </button>
     </div>

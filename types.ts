@@ -182,3 +182,18 @@ export interface InvoiceFooterConfig {
   bankDetails: string;
   contactInfo: string;
 }
+
+export interface ShareContent {
+  title?: string;
+  text?: string;
+  imageUrl?: string;
+  pdfUrl?: string;
+  fileName?: string;
+  mobile?: string;
+}
+
+export interface ShareResult {
+  success: boolean;
+  message: string;
+  method: 'native' | 'fallback' | 'failed';
+}

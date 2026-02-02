@@ -36,7 +36,7 @@ const Reports: React.FC = () => {
   const [checkedProducts, setCheckedProducts] = useState<Set<string>>(new Set());
 
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
-  const [readyDoc, setReadyDoc] = useState<{ name: string, html: string, dealer: any } | null>(null);
+  const [readyDoc, setReadyDoc] = useState<{ name: string, html: string, dealer: any, type: string } | null>(null);
   const [previewScale, setPreviewScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -121,7 +121,7 @@ const Reports: React.FC = () => {
       }
 
       const finalHtml = PdfTemplates.wrapHtml(html);
-      setReadyDoc({ name: fileName, html: finalHtml, dealer: target });
+      setReadyDoc({ name: fileName, html: finalHtml, dealer: target, type: type });
     } catch (e) { toast.error("Spooling Failed"); }
     finally { setSpooling(false); }
   };
@@ -130,6 +130,9 @@ const Reports: React.FC = () => {
     if (!readyDoc) return;
     setSpooling(true);
     const toastId = toast.loading(`${mode === 'save' ? 'Saving' : 'Preparing'} Report...`);
+
+    // Ensure we are at the top to avoid offset issues
+    window.scrollTo(0,0);
 
     const workerDiv = document.createElement('div');
     Object.assign(workerDiv.style, { position: 'absolute', left: '0', top: '0', width: '210mm', backgroundColor: '#fff', zIndex: '-1', opacity: '1', pointerEvents: 'none' });
@@ -142,10 +145,10 @@ const Reports: React.FC = () => {
       await new Promise(r => setTimeout(r, 2000));
 
       const opt = {
-        margin: 0,
+        margin: [10, 10, 20, 10], // Adjusted bottom margin to 20 to prevent cutting
         filename: readyDoc.name,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 3, useCORS: true, logging: false, backgroundColor: '#ffffff', windowWidth: 794 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', windowWidth: 794 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true, precision: 16 }
       };
 
@@ -157,12 +160,27 @@ const Reports: React.FC = () => {
         toast.success("Download started");
       } else {
         const pdfDataUri = await pdfEngine.output('datauristring');
+
+        // WhatsApp Formatting: *Text* for Bold, _Text_ for Italic. Use \n\n for sections.
+        let waText = `📄 *DOCUMENT SHARED*\n\n*Type:* _${readyDoc.type}_\n*File:* ${readyDoc.name}\n\nPlease find the attached report.`;
+
+        if (readyDoc.type === 'Invoice' && readyDoc.dealer) {
+          waText = `📦 *NEW INVOICE GENERATED*\n\n*Order No:* #${readyDoc.dealer.order_no}\n*Shop:* *${readyDoc.dealer.dealers?.shop_name || 'N/A'}*\n*Total:* *₹${readyDoc.dealer.final_total}*\n\n_Please check the attached PDF for details._`;
+        } else if (readyDoc.type === 'Ledger' && readyDoc.dealer) {
+          waText = `📒 *LEDGER STATEMENT*\n\n*Shop:* *${readyDoc.dealer.shop_name}*\n*Period:* ${fromDate} to ${toDate}\n\n_Please review the attached statement._`;
+        }
+
         const title = mode === 'email' ? `Report: ${readyDoc.name}` : `RCM Hub: ${readyDoc.name}`;
+
+        // Include dealer mobile if available to open their WhatsApp chat
+        const dealerMobile = readyDoc.dealer?.mobile || (readyDoc.dealer?.dealers?.mobile);
+
         await sharingService.share({
           pdfUrl: pdfDataUri,
           fileName: readyDoc.name,
           title: title,
-          text: `Please find the attached report: ${readyDoc.name}`,
+          text: waText,
+          mobile: dealerMobile
         });
       }
 
@@ -334,32 +352,14 @@ const Reports: React.FC = () => {
                     <div id="preview-content-root" className="bg-white shadow-2xl origin-top" style={{ width: '794px', transform: `scale(${previewScale})` }} dangerouslySetInnerHTML={{ __html: readyDoc.html }}></div>
                  </div>
               </div>
-              <div className="shrink-0 pt-2 pb-6 space-y-3">
-                 <div className="grid grid-cols-2 gap-3">
-                    <button 
-                      onClick={() => executeExport('share')} 
-                      disabled={spooling} 
-                      className="py-5 bg-emerald-600 text-white rounded-2xl uppercase text-[9px] font-black flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all disabled:opacity-50"
-                    >
-                      {spooling ? <Loader2 className="animate-spin" size={16} /> : <MessageSquare size={16}/>}
-                      WHATSAPP
-                    </button>
-                    <button 
-                      onClick={() => executeExport('email')} 
-                      disabled={spooling} 
-                      className="py-5 bg-blue-600 text-white rounded-2xl uppercase text-[9px] font-black flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all disabled:opacity-50"
-                    >
-                      {spooling ? <Loader2 className="animate-spin" size={16} /> : <Mail size={16}/>}
-                      EMAIL REPORT
-                    </button>
-                 </div>
+              <div className="shrink-0 pt-2 pb-6">
                  <button 
-                  onClick={() => executeExport('save')} 
-                  disabled={spooling} 
-                  className="w-full py-5 bg-slate-900 text-white rounded-2xl uppercase text-[10px] font-black flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all disabled:opacity-50"
+                   onClick={() => executeExport('share')}
+                   disabled={spooling}
+                   className="w-full py-6 bg-emerald-600 text-white rounded-[2rem] uppercase text-sm font-black flex items-center justify-center gap-3 shadow-2xl active:scale-95 transition-all disabled:opacity-50"
                  >
-                   {spooling ? <Loader2 className="animate-spin" size={18} /> : <Save size={18}/>}
-                   SAVE TO DEVICE STORAGE
+                   {spooling ? <Loader2 className="animate-spin" size={20} /> : <MessageSquare size={20}/>}
+                   SHARE ON WHATSAPP
                  </button>
               </div>
            </div>

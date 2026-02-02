@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
 import {
@@ -57,37 +56,52 @@ const Ledger: React.FC = () => {
     if (!isSilent) setLoading(true);
     try {
       const [dData, lData, pData] = await Promise.all([
-        supabase.from('dealers').select('*').order('shop_name'),
+        supabase.from('dealers').select('*'),
         supabase.from('ledger').select('*').order('created_at', { ascending: false }),
         supabase.from('company_profile').select('*').limit(1).maybeSingle()
       ]);
       setProfile(pData.data);
-      
-      const balances: Record<string, number> = {};
-      const latestUpdate: Record<string, string> = {};
-      
-      lData.data?.forEach(l => {
-        if (!balances[l.dealer_id]) {
-          balances[l.dealer_id] = 0;
-          latestUpdate[l.dealer_id] = l.created_at; 
+      const threshold = pData.data?.alert_threshold_days || 15;
+
+      const results = (dData.data || []).map(dealer => {
+        const logs = (lData.data || []).filter(l => l.dealer_id === dealer.id);
+
+        // Track latest activity for sorting
+        const lastActivity = logs.length > 0 ? logs[0].created_at : '1970-01-01';
+
+        let bal = 0;
+        const firstDebit = logs.find(l => l.type === 'DEBIT')?.date;
+        logs.forEach(l => {
+          if (l.type === 'DEBIT') bal += Number(l.amount);
+          else bal -= Number(l.amount);
+        });
+
+        let daysLeft = threshold;
+        if (bal > 0 && firstDebit) {
+            const debitDate = new Date(firstDebit);
+            const today = new Date();
+            debitDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+            const timeDiff = today.getTime() - debitDate.getTime();
+            const daysPassed = Math.floor(timeDiff / (1000 * 3600 * 24));
+            daysLeft = Math.max(0, threshold - daysPassed);
         }
-        balances[l.dealer_id] += l.type === 'DEBIT' ? Number(l.amount) : -Number(l.amount);
-      });
 
-      const dealerList = (dData.data || []).map(d => ({ 
-        ...d, 
-        balance: balances[d.id] || 0,
-        last_activity: latestUpdate[d.id] || '1970-01-01'
-      }));
+        return { ...dealer, balance: bal, daysLeft, lastActivity };
+      }).sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
 
-      dealerList.sort((a, b) => new Date(b.last_activity).getTime() - new Date(a.last_activity).getTime());
-      
-      setDealers(dealerList);
+      setDealers(results);
+
+      if (selectedDealer) {
+        const updated = results.find(d => d.id === selectedDealer.id);
+        if (updated) setSelectedDealer(updated);
+      }
+
     } catch (err) { toast.error("FETCH FAILED"); }
     finally { if (!isSilent) setLoading(false); }
-  }, []);
+  }, [selectedDealer]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchTransactions = async (dealerId: string) => {
     setLoading(true);
@@ -115,48 +129,38 @@ const Ledger: React.FC = () => {
     finally { setUploading(false); }
   };
 
-  const dispatchWA = async (mode: 'Standard' | 'Urgent') => {
-    if (!selectedDealer) return;
+  const dispatchWA = async (mode: 'Standard' | 'Urgent', dealerParam?: any) => {
+    const dealer = dealerParam || selectedDealer;
+    if (!dealer) return;
     const toastId = toast.loading("GENERATING REMINDER...");
     try {
-      const amountStr = Math.abs(selectedDealer.balance).toLocaleString('en-IN');
-      const shopName = selectedDealer.shop_name.toUpperCase();
-      const days = 11; // As per user's template
+      const amountStr = Math.abs(dealer.balance).toLocaleString('en-IN');
+      const shopName = dealer.shop_name.toUpperCase();
+      const days = dealer.daysLeft;
 
       const generatedImageData = await ImageGenerator.generateAlertCard({
-        shopName: selectedDealer.shop_name,
+        shopName: dealer.shop_name,
         amount: amountStr,
         days: days,
         mode: mode,
         profileName: profile?.name || 'RCM ERP'
       });
-      
-      // Upload image to Supabase storage (optional backup)
-      try {
-        const blob = base64toBlob(generatedImageData, 'image/png');
-        const path = `reminders/reminder-${selectedDealer.id}-${Date.now()}.png`;
-        await supabase.storage.from('products').upload(path, blob);
-      } catch (uploadErr) {
-        console.warn("Cloud backup failed, continuing with direct share", uploadErr);
-      }
 
       let waText = '';
       if (mode === 'Standard') {
-        waText = `🔔 *PAYMENT REMINDER* 🔔\n\nHello *${shopName}*,\n\nThis is a friendly reminder that your balance of *₹${amountStr}* is outstanding.\n\n📍*Pending Amount:* *₹${amountStr}*💸\n⏳ *Remaining Time:* *${days} Days*\n\n_Sent via RCM ERP_ 🙏`;
+        waText = `🔔 *PAYMENT REMINDER* 🔔\n\nHello *${shopName}*,\n\nThis is a friendly reminder that your balance of *₹${amountStr}* is outstanding.\n\n📍 *Pending Amount:* *₹${amountStr}* 💸\n⏳ *Remaining Time:* *${days} Days*\n\nPlease process the payment via UPI to avoid account suspension.\n\n_Sent via RCM ERP_ 🙏`;
       } else { // Urgent
-        waText = `🚨*URGENT: PAYMENT OVERDUE*🚨\n\nHello *${shopName}*,\n\nYour account has reached a *CRITICAL* state with an outstanding balance of *₹${amountStr}*.\n\n📍*Overdue Amount:* ₹${amountStr}🛑\n⚠️*Status:* *URGENT ACTION REQUIRED*\n⏳ *Deadline:* *${days} Days*\n\n_Authorized by RCM ERP_ ⚠️`;
+        waText = `🚨 *URGENT: PAYMENT OVERDUE* 🚨\n\nHello *${shopName}*,\n\nYour account has reached a *CRITICAL* state with an outstanding balance of *₹${amountStr}*.\n\n📍 *Overdue Amount:* ₹${amountStr} 🛑\n⚠️ *Status:* *IMMEDIATE ACTION REQUIRED*\n⏳ *Deadline:* *OVERDUE / SUSPENSION*\n\nPlease settle this amount immediately via UPI.\n\n_Authorized by RCM ERP_ ⚠️`;
       }
-      
-      // FIX: Use shareImageAndText for combined Image + Text sharing
-      await PermissionHandler.shareImageAndText(generatedImageData, waText, 'Payment Reminder');
 
-      setSentLog(prev => ({ ...prev, [`${selectedDealer.id}-${mode}`]: true }));
+      const fileName = `Reminder_${dealer.shop_name.replace(/\s+/g, '_')}_${mode}.png`;
+      await PermissionHandler.shareImageAndText(generatedImageData, waText, 'Payment Reminder', dealer.mobile, fileName);
+
+      setSentLog(prev => ({ ...prev, [`${dealer.id}-${mode}`]: true }));
       toast.dismiss(toastId);
-      toast.success("Ready to Share!");
-    } catch (e) { 
-      toast.dismiss(toastId); 
+    } catch (e) {
+      toast.dismiss(toastId);
       toast.error("Failed to prepare reminder.");
-      console.error(e);
     }
   };
 
@@ -168,8 +172,15 @@ const Ledger: React.FC = () => {
       delete payload.id;
       if (editingTxId) await supabase.from('ledger').update(payload).eq('id', editingTxId);
       else await supabase.from('ledger').insert([payload]);
-      
+
       toast.success("LOGGED ✅");
+
+      // Automated Update Notification
+      const typeEmoji = txType === 'CREDIT' ? '📥' : '📤';
+      const updateText = `✅ *LEDGER UPDATED* ${typeEmoji}\n\nHello *${selectedDealer.shop_name.toUpperCase()}*,\n\nA new *${txType}* entry has been authorized in your account.\n\n📝 *Narration:* ${txForm.narration || 'Transaction'}\n💰 *Amount:* *₹${Number(txForm.amount).toLocaleString()}*\n📅 *Date:* ${txForm.date}\n\n_Your updated balance will reflect in the next statement. Thank you!_ 🙏\n\n_RCM Business Hub_`;
+
+      PermissionHandler.openWhatsApp(selectedDealer.mobile, updateText);
+
       setIsTxModalOpen(false);
       setEditingTxId(null);
       setTxForm(initialTxForm);
@@ -210,7 +221,7 @@ const Ledger: React.FC = () => {
           <div key={d.id} onClick={() => { setSelectedDealer(d); fetchTransactions(d.id); }} className={`p-6 rounded-[2rem] border transition-all flex justify-between items-center ${selectedDealer?.id === d.id ? 'border-green-600 bg-white' : 'border-blue-100'}`}>
             <div className="flex-1 truncate">
               <h3 className={`text-lg font-black italic uppercase truncate ${selectedDealer?.id === d.id ? 'text-green-600' : 'text-blue-600'}`}>{d.shop_name}</h3>
-              <p className="text-[10px] text-black font-black italic mt-1 uppercase opacity-60">#{d.dealer_code}</p>
+              <p className="text-[10px] text-black font-black italic mt-1 uppercase opacity-60">#{d.dealer_code} | {d.daysLeft} Days Left</p>
             </div>
             <p className={`text-sm font-black italic ${d.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>₹{Math.abs(d.balance).toLocaleString()}</p>
           </div>
@@ -229,6 +240,7 @@ const Ledger: React.FC = () => {
               <div className="bg-white p-8 rounded-[2.5rem] border border-blue-100 text-center">
                 <p className="text-[10px] uppercase font-black text-black opacity-50 italic mb-1 tracking-widest">Outstanding Balance</p>
                 <h3 className={`text-4xl font-black italic tracking-tighter ${selectedDealer.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>₹{Math.abs(selectedDealer.balance).toLocaleString()}</h3>
+                <p className="text-[10px] font-black uppercase text-gray-400 mt-2 italic">{selectedDealer.daysLeft} DAYS REMAINING</p>
               </div>
 
               <div className="flex gap-4 w-full">
@@ -310,7 +322,7 @@ const Ledger: React.FC = () => {
       {isDesignerOpen && (
         <div className="fixed inset-0 bg-white z-[1100] flex flex-col h-full w-full">
            <header className="px-6 py-6 border-b border-blue-100 flex justify-between items-center bg-white shrink-0">
-             <button onClick={() => setIsDesignerOpen(false)} className="p-2 border border-blue-100 rounded-xl"><ArrowLeft size={24}/></button>
+             <button onClick={() => setIsDesignerOpen(false)} className="p-2 border border-blue-100 rounded-xl"><ArrowLeft size={24} /></button>
              <h3 className="text-xl font-black italic uppercase text-green-600">Hub Designer</h3>
              <button onClick={() => setIsDesignerOpen(false)}><X size={32}/></button>
            </header>
@@ -338,8 +350,9 @@ const Ledger: React.FC = () => {
                     if (!cardPreview) return toast.error("Generate card first!");
                     const toastId = toast.loading("Sharing...");
                     try {
-                        // FIX: Only share IMAGE for Card Hub (no text)
-                        await PermissionHandler.shareImageAndText(cardPreview, '', 'Dealer Card');
+                        const fileName = `Design_${selectedDealer.shop_name.replace(/\s+/g, '_')}.png`;
+                        // Combined Image + Mobile (Text empty for card hub as per previous logic)
+                        await PermissionHandler.shareImageAndText(cardPreview, '', 'Dealer Card', selectedDealer.mobile, fileName);
                         toast.dismiss(toastId);
                         toast.success("Shared to Hub!");
                     } catch(e) {

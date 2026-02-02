@@ -88,9 +88,17 @@ class MainActivity : AppCompatActivity() {
                     putExtra(Intent.EXTRA_STREAM, uri)
                     if (text.isNotEmpty()) putExtra(Intent.EXTRA_TEXT, text)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    
+                    // If mobile is provided, try targeting WhatsApp directly
+                    if (mobile.isNotEmpty()) {
+                        setPackage("com.whatsapp")
+                        // Use the JID for specific contact sharing if possible (works on many versions)
+                        putExtra("jid", "91$mobile@s.whatsapp.net")
+                    }
                 }
                 
-                startActivity(Intent.createChooser(intent, "Share RCM Document"))
+                val chooserTitle = if (mobile.isNotEmpty()) "Share via WhatsApp" else "Share RCM Document"
+                startActivity(Intent.createChooser(intent, chooserTitle))
 
             } catch (e: Exception) {
                 runOnUiThread {

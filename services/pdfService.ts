@@ -1,3 +1,4 @@
+
 import { CompanyProfile, Dealer, Order, LedgerEntry, Product } from '../types';
 
 /**
@@ -31,9 +32,13 @@ export const PdfTemplates = {
           font-family: 'Inter', sans-serif;
         }
 
+        div {
+          page-break-inside: avoid;
+        }
+
         .pdf-page {
           width: 210mm;
-          height: 296.5mm; /* Strict A4 limit to prevent blank pages in Android */
+          height: 297mm; /* Standard A4 Height */
           padding: 12mm;
           position: relative;
           box-sizing: border-box;
@@ -104,6 +109,28 @@ export const PdfTemplates = {
             border: 1px solid #e2e8f0;
             padding: 5px;
             font-weight: 900;
+            text-align: center;
+            vertical-align: middle !important;
+        }
+
+        .verified-stamp {
+          position: absolute;
+          right: 35px;
+          top: 50%;
+          transform: translateY(-50%) rotate(-12deg);
+          border: 4px double #059669;
+          color: #059669;
+          padding: 8px 15px;
+          font-weight: 900;
+          border-radius: 8px;
+          text-transform: uppercase;
+          opacity: 0.85;
+          font-size: 12px;
+          text-align: center;
+          line-height: 1.2;
+          pointer-events: none;
+          background: rgba(255,255,255,0.8);
+          z-index: 10;
         }
       </style>
       <div class="pdf-body-wrapper">
@@ -124,31 +151,33 @@ export const PdfTemplates = {
           <p style="font-size: 13px; font-weight: 900; color: #666; margin-top: 10px; text-transform: uppercase; text-align: center;">This official document certifies that</p>
           <h2 style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 900; color: #CDA434; margin: 15px 0; text-transform: uppercase; border-bottom: 6px double #CDA434; width: 90%; text-align: center; padding-bottom: 5px;">${dealer.shop_name}</h2>
           <p style="font-size: 11px; font-weight: 900; color: #444; margin-bottom: 30px; font-style: italic; text-align: center; max-width: 550px; line-height: 1.6;">Is officially registered and authorized to represent, distribute, and serve as a business hub for R.C.M. Hardware products.</p>
+
           <div style="width: 100%; max-width: 650px; border: 2.5px solid #CDA434; padding: 35px 40px 25px 40px; position: relative; background: #fff;">
-             <div style="display: flex; flex-direction: column; gap: 12px;">
+             <div class="verified-stamp">VERIFIED BY<br/>RCM HARDWARE</div>
+             <div style="display: flex; flex-direction: column; gap: 12px; width: 70%;">
                 <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Shop Name</span>
+                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Shop Name</span>
                    <span style="font-weight: 900; font-size: 13px; color: #0F172A; text-transform: uppercase;">${dealer.shop_name}</span>
                 </div>
                 <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Proprietor</span>
+                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Proprietor</span>
                    <span style="font-weight: 900; font-size: 13px; color: #0F172A;">${dealer.owner_name}</span>
                 </div>
                 <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Mobile Number</span>
+                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Mobile</span>
                    <span style="font-weight: 900; font-size: 13px; color: #0F172A;">+91 ${dealer.mobile}</span>
                 </div>
                 <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registry No.</span>
+                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Cheque No.</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #2563EB;">${dealer.cheque_no || 'NOT PROVIDED'}</span>
+                </div>
+                <div style="display: flex; border-bottom: 1.5 solid #F1F5F9; padding-bottom: 6px;">
+                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registry No.</span>
                    <span style="font-weight: 900; font-size: 13px; color: #0F172A;">${dealer.dealer_code || 'REG-PENDING'}</span>
                 </div>
                 <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Pincode</span>
-                   <span style="font-weight: 900; font-size: 13px; color: #0F172A;">${dealer.pincode || 'N/A'}</span>
-                </div>
-                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 200px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registered Address</span>
-                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; line-height: 1.2;">${dealer.address}, ${dealer.city}</span>
+                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registered Address</span>
+                   <span style="font-weight: 900; font-size: 12px; color: #0F172A; line-height: 1.2;">${dealer.address}, ${dealer.city} - ${dealer.pincode}</span>
                 </div>
              </div>
           </div>
@@ -170,9 +199,8 @@ export const PdfTemplates = {
     let sn = 1;
     const isRCM = assetType === 'RCM';
 
-    // Hardware gets a wider product detail column (440px)
-    // RCM keeps its layout as is (344px)
-    const detailColWidth = isRCM ? '344px' : '440px';
+    const baseDetailWidth = isRCM ? 344 : 440;
+    const detailColWidth = (baseDetailWidth - 67) + 'px';
 
     for (let p = 0; p < pagesCount; p++) {
       const currentProducts = products.slice(p * itemsPerPage, (p + 1) * itemsPerPage);
@@ -182,16 +210,15 @@ export const PdfTemplates = {
           if (isRCM) {
             return `<tr>
               <td style="text-align: center; font-size: 9px; font-weight: 900;">${v.size}</td>
-              <td style="text-align: right; color: #ef4444; font-size: 9px; font-weight: 900;">₹${toINR(v.mrp)}</td>
-              <td style="text-align: center; color: #3b82f6; font-size: 9px; font-weight: 900;">${discount}%</td>
-              <td style="text-align: right; color: #22c55e; font-size: 10px; font-weight: 900;">₹${toINR(v.final_price)}</td>
+              <td style="text-align: right; color: #ef4444; font-size: 9px; font-weight: 900; width: 30%;">₹${toINR(v.mrp)}</td>
+              <td style="text-align: center; color: #3b82f6; font-size: 9px; font-weight: 900; width: 15%;">${discount}%</td>
+              <td style="text-align: right; color: #22c55e; font-size: 10px; font-weight: 900; width: 30%;">₹${toINR(v.final_price)}</td>
             </tr>`;
           } else {
-            // Hardware: No discount section
             return `<tr>
               <td style="text-align: center; font-size: 9px; font-weight: 900;">${v.size}</td>
-              <td style="text-align: right; color: #ef4444; font-size: 9px; font-weight: 900;">₹${toINR(v.mrp)}</td>
-              <td style="text-align: right; color: #22c55e; font-size: 10px; font-weight: 900;">₹${toINR(v.final_price)}</td>
+              <td style="text-align: right; color: #ef4444; font-size: 9px; font-weight: 900; width: 35%;">₹${toINR(v.mrp)}</td>
+              <td style="text-align: right; color: #22c55e; font-size: 10px; font-weight: 900; width: 35%;">₹${toINR(v.final_price)}</td>
             </tr>`;
           }
         }).join('');
@@ -208,13 +235,13 @@ export const PdfTemplates = {
               </div>
             </div>
           </td>
-          <td style="padding: 0; vertical-align: top;">
+          <td style="padding: 0; vertical-align: middle;">
             <table class="variant-table" style="width: 100%; border: none;">
               <thead>
                 <tr>
-                  <th style="width: 25%; text-align: center;">SIZE</th>
-                  <th style="width: 25%; text-align: right;">MRP</th>
-                  ${isRCM ? '<th style="width: 20%; text-align: center;">DISC</th>' : ''}
+                  <th style="text-align: center;">SIZE</th>
+                  <th style="text-align: right;">MRP</th>
+                  ${isRCM ? '<th style="text-align: center;">DISC</th>' : ''}
                   <th style="text-align: right;">FINAL RATE</th>
                 </tr>
               </thead>
@@ -231,7 +258,7 @@ export const PdfTemplates = {
              <h2 style="font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 5px; color: #000;">${assetType} STOCK REGISTRY</h2>
              <p style="font-size: 8px; font-weight: 900; color: #64748b; margin-top: 2px;">OFFICIAL INVENTORY LOG | PAGE ${p + 1} OF ${pagesCount}</p>
           </header>
-          <table>
+          <table style="table-layout: fixed;">
             <thead>
               <tr>
                 <th style="width: 40px;">SN</th>
@@ -247,14 +274,20 @@ export const PdfTemplates = {
   },
 
   generateInvoiceHtml: (order: Order, items: any[], profile: CompanyProfile) => {
-     const itemsPerPage = 16;
+     /**
+      * Pagination Fix:
+      * Setting itemsPerPage to 14 to allow enough space for header and summary on the same page without overflow.
+      */
+     const itemsPerPage = 14;
      const pagesCount = Math.ceil(items.length / itemsPerPage);
      let htmlContent = '';
 
      for (let p = 0; p < pagesCount; p++) {
        const isLastPage = (p === pagesCount - 1);
        const startIdx = p * itemsPerPage;
-       const rowsHtml = items.slice(startIdx, startIdx + itemsPerPage).map((i, idx) => `
+       const currentItems = items.slice(startIdx, startIdx + itemsPerPage);
+
+       const rowsHtml = currentItems.map((i, idx) => `
          <tr>
            <td style="width: 45px; text-align: center; font-weight: 900;">${startIdx + idx + 1}</td>
            <td style="padding-left: 15px;">
@@ -304,19 +337,23 @@ export const PdfTemplates = {
                 </div>
              </div>
            </header>
-           <table>
-             <thead>
-               <tr>
-                 <th style="width: 45px;">SN</th>
-                 <th style="text-align: left; padding-left: 15px;">INVENTORY DESCRIPTION</th>
-                 <th style="width: 84px;">SIZE</th>
-                 <th style="width: 75px;">QTY</th>
-                 <th style="width: 95px;">RATE</th>
-                 <th style="width: 110px;">TOTAL</th>
-               </tr>
-             </thead>
-             <tbody>${rowsHtml}</tbody>
-           </table>
+
+           <div style="flex-grow: 1;">
+             <table>
+               <thead>
+                 <tr>
+                   <th style="width: 45px;">SN</th>
+                   <th style="text-align: left; padding-left: 15px;">INVENTORY DESCRIPTION</th>
+                   <th style="width: 84px;">SIZE</th>
+                   <th style="width: 75px;">QTY</th>
+                   <th style="width: 95px;">RATE</th>
+                   <th style="width: 110px;">TOTAL</th>
+                 </tr>
+               </thead>
+               <tbody>${rowsHtml}</tbody>
+             </table>
+           </div>
+
            ${isLastPage ? `
              <div class="summary-box" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                <div style="width: 35%; border: 2.5px solid #CDA434; padding: 15px; text-align: center;">
@@ -346,7 +383,9 @@ export const PdfTemplates = {
     let rb = openingBal;
     let tDebit = 0;
     let tCredit = 0;
+
     allRows.push({ sn: 1, date: 'START', desc: 'OPENING BALANCE', debit: '-', credit: '-', bal: rb, isOpening: true });
+
     logs.forEach((l, idx) => {
       const amt = Number(l.amount);
       if (l.type === 'DEBIT') { rb = formatMoney(rb + amt); tDebit = formatMoney(tDebit + amt); }
@@ -361,8 +400,10 @@ export const PdfTemplates = {
         type: l.type
       });
     });
+
     const pagesCount = Math.ceil(allRows.length / itemsPerPage);
     let htmlContent = '';
+
     for (let p = 0; p < pagesCount; p++) {
       const isLastPage = (p === pagesCount - 1);
       const rowsHtml = allRows.slice(p * itemsPerPage, (p + 1) * itemsPerPage).map(r => `
@@ -374,6 +415,7 @@ export const PdfTemplates = {
           <td style="width: 105px; text-align: right; color: ${r.type === 'CREDIT' ? '#059669' : '#000'}; font-weight: 900;">${r.credit}</td>
           <td style="width: 120px; text-align: right; font-weight: 900;">${r.bal}</td>
         </tr>`).join('');
+
       htmlContent += `
         <div class="pdf-page">
           <header style="margin-bottom: 20px;">
@@ -382,16 +424,25 @@ export const PdfTemplates = {
               <h2 style="font-size: 20px; font-weight: 900; text-transform: uppercase; margin: 10px 0;">LEDGER ACCOUNT STATEMENT</h2>
               <p style="font-size: 11px; font-weight: 900; border: 1px solid #CDA434; display: inline-block; padding: 4px 15px;">${fromDate} — ${toDate}</p>
             </div>
-            <div style="border: 1.5 solid #CDA434; padding: 12px;">
-              <p style="font-weight: 900; color: #CDA434; font-size: 9px; text-transform: uppercase;">DEALER INFO:</p>
-              <p style="font-weight: 900; font-size: 12px;">${dealer.shop_name}</p>
-              <p style="font-size: 10px; font-weight: 900;">Code: ${dealer.dealer_code} | Mob: ${dealer.mobile}</p>
+            <div style="border: 1.5px solid #CDA434; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <p style="font-weight: 900; color: #CDA434; font-size: 9px; text-transform: uppercase;">DEALER INFO:</p>
+                <p style="font-weight: 900; font-size: 12px;">${dealer.shop_name}</p>
+                <p style="font-size: 10px; font-weight: 900;">Code: ${dealer.dealer_code} | Mob: ${dealer.mobile}</p>
+              </div>
+              <div style="text-align: right;">
+                 <p style="font-size: 9px; font-weight: 900; color: #64748b;">PAGE ${p + 1} OF ${pagesCount}</p>
+              </div>
             </div>
           </header>
-          <table style="margin-bottom: 0;">
-            <thead><tr><th style="width: 35px;">#</th><th style="width: 80px;">DATE</th><th style="text-align: left; padding-left: 10px;">DESCRIPTION</th><th style="width: 105px;">DEBIT(-)</th><th style="width: 105px;">CREDIT(+)</th><th style="width: 120px;">BALANCE</th></tr></thead>
-            <tbody>${rowsHtml}</tbody>
-          </table>
+
+          <div style="flex-grow: 1;">
+            <table style="margin-bottom: 0;">
+              <thead><tr><th style="width: 35px;">#</th><th style="width: 80px;">DATE</th><th style="text-align: left; padding-left: 10px;">DESCRIPTION</th><th style="width: 105px;">DEBIT(-)</th><th style="width: 105px;">CREDIT(+)</th><th style="width: 120px;">BALANCE</th></tr></thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+
           ${isLastPage ? `
             <div style="margin-top: 10px; border: 3px solid #CDA434; padding: 15px; display: flex; justify-content: space-between; background: #fdfae6;">
               <div style="text-align: center; flex: 1;"><div style="font-size: 10px; font-weight: 900; color: #DC2626; text-transform: uppercase;">DR TOTAL</div><div style="font-size: 12px; font-weight: 900;">₹${toINR(tDebit)}</div></div>

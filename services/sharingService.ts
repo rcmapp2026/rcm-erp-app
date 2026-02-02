@@ -1,119 +1,79 @@
-
 import { ShareContent, ShareResult } from '../types';
 
 /**
- * ADVANCED SHARING ENGINE (v3.0)
+ * ADVANCED SHARING ENGINE (v3.5)
  * Optimized for Android APKs, WebView, and WhatsApp.
  */
 export const sharingService = {
 
   async share(content: ShareContent): Promise<ShareResult> {
     try {
-      const files: File[] = [];
+      const android = (window as any).AndroidInterface || (window as any).ShareEngine;
 
-      // 1. Process Image
-      if (content.imageUrl) {
-        const imageFile = await this.toFile(
-          content.imageUrl,
-          `RCM_${Date.now()}.jpg`, // Using JPG for better Android compatibility
-          'image/jpeg'
-        );
-        if (imageFile) files.push(imageFile);
-      }
+      if (android) {
+        let base64 = '';
+        let mimeType = '';
+        let fileName = '';
 
-      // 2. Process PDF
-      if (content.pdfUrl) {
-        const pdfFile = await this.toFile(
-          content.pdfUrl,
-          content.fileName || `Report_${Date.now()}.pdf`,
-          'application/pdf'
-        );
-        if (pdfFile) files.push(pdfFile);
-      }
-
-      // 3. Trigger Native Share (APK Support)
-      if (navigator.share) {
-        const shareData: any = {};
-
-        // Only add text if it's provided (Fixes "Sharing from RCM ERP" issue)
-        if (content.text && content.text.trim()) {
-          shareData.text = content.text;
+        if (content.imageUrl) {
+          base64 = await this.ensureBase64(content.imageUrl);
+          mimeType = this.detectMimeType(base64, 'image/png');
+          const ext = mimeType.split('/')[1] || 'png';
+          fileName = content.fileName || `RCM_Reminder_${Date.now()}.${ext}`;
+        } else if (content.pdfUrl) {
+          base64 = await this.ensureBase64(content.pdfUrl);
+          mimeType = 'application/pdf';
+          fileName = content.fileName || `Report_${Date.now()}.pdf`;
         }
 
-        if (files.length > 0) {
-           shareData.files = files;
-           // Note: Some Android versions prefer no title when sharing files
-        } else if (content.title) {
-           shareData.title = content.title;
-        }
+        // Strip "data:...base64," prefix before sending to bridge for maximum compatibility
+        const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
 
-        try {
-          // Attempt sharing
-          await navigator.share(shareData);
-          return { success: true, message: 'Shared!', method: 'native' };
-        } catch (shareErr: any) {
-          if (shareErr.name === 'AbortError') return { success: false, message: 'Cancelled', method: 'failed' };
-          console.error("Native share failed, using fallback", shareErr);
+        if (cleanBase64 && android.shareFile) {
+          const cleanMobile = (content.mobile || '').replace(/\D/g, '').slice(-10);
+
+          try {
+            // Modern Bridge with WhatsApp Support
+            android.shareFile(cleanBase64, fileName, mimeType, content.text || '', cleanMobile);
+          } catch (e) {
+            // Legacy Fallback
+            android.shareFile(cleanBase64, fileName, mimeType, content.text || '');
+          }
+          return { success: true, message: 'Sharing...', method: 'native' };
         }
       }
 
-      // 4. Final Fallback (For WhatsApp/Email)
+      // Web Fallback logic
       return this.fallbackShare(content);
-
-    } catch (error: any) {
-      console.error('Sharing engine failure:', error);
+    } catch (error) {
+      console.error('Sharing failure:', error);
       return { success: false, message: "Sharing failed.", method: 'failed' };
     }
   },
 
-  /**
-   * High-reliability converter for APK environments.
-   */
-  async toFile(data: string | Blob, filename: string, mimeType: string): Promise<File | null> {
+  async ensureBase64(data: string): Promise<string> {
+    if (data.startsWith('data:')) return data;
     try {
-      let blob: Blob;
+      const response = await fetch(data);
+      const blob = await response.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+    } catch { return data; }
+  },
 
-      if (data instanceof Blob) {
-        blob = data;
-      } else if (typeof data === 'string' && data.startsWith('data:')) {
-        const byteString = atob(data.split(',')[1]);
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-          ia[i] = byteString.charCodeAt(i);
-        }
-        blob = new Blob([ab], { type: mimeType });
-      } else {
-        const response = await fetch(data as string);
-        blob = await response.blob();
-      }
-
-      return new File([blob], filename, { type: mimeType });
-    } catch (err) {
-      return null;
-    }
+  detectMimeType(base64: string, fallback: string): string {
+    const match = base64.match(/^data:([^;]+);/);
+    return match ? match[1] : fallback;
   },
 
   fallbackShare(content: ShareContent): ShareResult {
-    // PDF Web Fallback
-    if (content.pdfUrl && !content.imageUrl) {
-      const link = document.createElement('a');
-      link.href = typeof content.pdfUrl === 'string' ? content.pdfUrl : URL.createObjectURL(content.pdfUrl);
-      link.download = content.fileName || 'report.pdf';
-      link.click();
-      return { success: true, message: 'Downloading...', method: 'fallback' };
-    }
-
-    // WhatsApp Fallback
-    // If native share fails, we can't send a local file, so we send the text.
-    // If it's a remote URL, we include it.
-    const textToShare = content.text || content.title || '';
-    const imageLink = (content.imageUrl && typeof content.imageUrl === 'string' && !content.imageUrl.startsWith('data:'))
-      ? `\n\nLink: ${content.imageUrl}` : '';
-
-    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(textToShare + imageLink)}`;
+    const textToShare = content.text || '';
+    const mobile = (content.mobile || '').replace(/\D/g, '').slice(-10);
+    const waUrl = `https://wa.me/91${mobile}?text=${encodeURIComponent(textToShare)}`;
     window.open(waUrl, '_blank');
-
     return { success: true, message: 'WhatsApp Opened', method: 'fallback' };
   }
 };

@@ -10,7 +10,9 @@ export class PermissionHandler {
   static async shareImageAndText(
     base64Data?: string,
     text: string = '',
-    title: string = 'RCM Business'
+    title: string = 'RCM Business',
+    mobile?: string,
+    fileName?: string
   ) {
     if (!base64Data) return;
 
@@ -18,6 +20,8 @@ export class PermissionHandler {
       title,
       text,
       imageUrl: base64Data,
+      mobile,
+      fileName
     });
   }
 
@@ -25,13 +29,15 @@ export class PermissionHandler {
     base64Data: string,
     fileName: string,
     text: string,
-    title: string = 'RCM Business'
+    title: string = 'RCM Business',
+    mobile?: string
   ) {
     await sharingService.share({
       title,
       text,
       pdfUrl: base64Data,
       fileName,
+      mobile
     });
   }
 
