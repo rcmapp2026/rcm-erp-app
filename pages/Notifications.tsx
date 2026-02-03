@@ -44,7 +44,7 @@ const Notifications: React.FC = () => {
     fetchHistory();
     supabase.from('dealers')
       .select('id, shop_name, mobile, dealer_code')
-      .eq('is_active', true)
+      .eq('status', 'Active')
       .order('shop_name')
       .then(({data}) => setDealers(data || []));
   }, [fetchHistory]);

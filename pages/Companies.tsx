@@ -79,7 +79,6 @@ const Companies: React.FC = () => {
 
   const filteredComps = comps.filter(c => c.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  // Deep-Dive Overlay for Product Variants
   if (selectedProduct) {
     return (
       <div className="fixed inset-0 bg-white z-[200] flex flex-col animate-in slide-in-from-right duration-300 font-black">
@@ -137,8 +136,8 @@ const Companies: React.FC = () => {
         </header>
         <div className="p-6 grid grid-cols-2 gap-4 pb-32">
           {loading ? <div className="col-span-2 py-20 text-center"><Loader2 className="animate-spin mx-auto text-blue-600"/></div> : compProducts.length === 0 ? <p className="col-span-2 text-center text-gray-300 font-black italic py-20 uppercase tracking-widest">No Assets Available</p> : compProducts.map(p => (
-            <button key={p.id} onClick={() => setSelectedProduct(p)} className="bg-white p-4 rounded-3xl border-2 border-blue-600 shadow-sm text-left active:scale-[0.98] transition-all flex flex-col">
-               <img src={p.image_url} className="w-full aspect-square object-cover rounded-2xl mb-3 shadow-sm"/>
+            <button key={p.id} onClick={() => setSelectedProduct(p)} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-left active:scale-[0.98] transition-all flex flex-col">
+               <img src={p.image_url} className="w-full aspect-square object-cover rounded-xl mb-3 shadow-sm"/>
                <p className="text-[10px] font-black uppercase italic leading-tight truncate">{p.name}</p>
                <div className="flex items-center justify-between mt-2">
                   <p className="text-sm font-black italic text-emerald-600">₹{Math.round(p.price).toLocaleString()}</p>
@@ -153,25 +152,25 @@ const Companies: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-32 px-4 font-black text-left">
-      <div className="flex bg-gray-900 p-1.5 rounded-[1.5rem] shadow-xl items-center gap-2">
-        <button onClick={() => { setActiveTab('Hardware'); setViewMode('REMOVE'); }} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'Hardware' ? 'bg-orange-500 text-white' : 'text-gray-500'}`}>Hardware</button>
-        <button onClick={() => { setActiveTab('RCM'); setViewMode('REMOVE'); }} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'RCM' ? 'bg-orange-500 text-white' : 'text-gray-500'}`}>RCM</button>
+      <div className="flex bg-gray-50 p-1.5 rounded-3xl items-center gap-1">
+        <button onClick={() => { setActiveTab('Hardware'); setViewMode('REMOVE'); }} className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'Hardware' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-400'}`}>Hardware</button>
+        <button onClick={() => { setActiveTab('RCM'); setViewMode('REMOVE'); }} className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'RCM' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-400'}`}>RCM</button>
       </div>
 
       <div className="relative">
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
-        <input type="text" placeholder="Search Authorized Brands..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-gray-50 p-6 pl-14 rounded-[2rem] font-black uppercase italic outline-none shadow-sm transition-all focus:bg-white focus:ring-4 focus:ring-orange-500/5" />
+        <input type="text" placeholder="Search Authorized Brands..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-gray-50 p-6 pl-14 rounded-3xl font-black uppercase italic outline-none shadow-inner" />
       </div>
 
-      <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200">
-        <button onClick={() => { setViewMode('ADD'); setIsEditing(false); setName(''); }} className={`flex-1 py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'ADD' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}>ADD BRAND</button>
-        <button onClick={() => setViewMode('REMOVE')} className={`flex-1 py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'REMOVE' ? 'bg-white text-rcm-red shadow-sm' : 'text-gray-400'}`}>{isEditing ? 'REVISE' : 'VIEW'}</button>
+      <div className="flex bg-gray-50 p-1.5 rounded-3xl">
+        <button onClick={() => { setViewMode('ADD'); setIsEditing(false); setName(''); }} className={`flex-1 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'ADD' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}>ADD BRAND</button>
+        <button onClick={() => setViewMode('REMOVE')} className={`flex-1 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'REMOVE' ? 'bg-white text-rcm-red shadow-sm' : 'text-gray-400'}`}>{isEditing ? 'REVISE' : 'VIEW'}</button>
       </div>
 
       {viewMode === 'ADD' && (
-        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl space-y-6 animate-in slide-in-from-top-4 duration-300">
+        <div className="bg-white p-8 rounded-3xl border border-gray-50 shadow-lg space-y-6 animate-in slide-in-from-top-4 duration-300">
            <input value={name} onChange={e => setName(e.target.value)} placeholder="BRAND NAME..." className="w-full p-6 bg-gray-50 rounded-2xl font-black italic uppercase outline-none border-none text-lg shadow-inner" />
-           <button onClick={handleSave} className="w-full py-7 bg-orange-500 text-white rounded-[2rem] font-black uppercase italic tracking-[0.2em] shadow-xl active:scale-95 transition-all">
+           <button onClick={handleSave} className="w-full py-7 bg-orange-500 text-white rounded-2xl font-black uppercase italic tracking-widest shadow-xl active:scale-95 transition-all">
              {isEditing ? 'CONFIRM REVISION' : 'AUTHORIZE BRAND'}
            </button>
         </div>
@@ -179,14 +178,14 @@ const Companies: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-3">
         {filteredComps.map(c => (
-          <div key={c.id} className="w-full p-6 bg-white rounded-2xl border border-gray-100 flex items-center justify-between active:scale-[0.98] transition-all shadow-sm">
+          <div key={c.id} className="w-full p-5 bg-white rounded-2xl border border-gray-50 flex items-center justify-between active:scale-[0.98] transition-all shadow-sm">
              <button onClick={() => { setSelectedComp(c); fetchProducts(c.id); }} className="flex-1 flex items-center gap-4 text-left">
                 <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center"><Building2 size={18}/></div>
                 <span className="font-black italic uppercase text-sm tracking-tight">{c.name}</span>
              </button>
              {viewMode === 'REMOVE' && (
                <div className="flex gap-2">
-                 <button onClick={(e) => openEdit(e, c)} className="p-3 text-blue-600 bg-blue-50 rounded-xl active:scale-95 border border-blue-100 shadow-sm"><Edit3 size={18}/></button>
+                 <button onClick={(e) => openEdit(e, c)} className="p-3 text-blue-600 bg-blue-50 rounded-xl active:scale-95 border border-blue-50 shadow-sm"><Edit3 size={18}/></button>
                </div>
              )}
           </div>

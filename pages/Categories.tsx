@@ -77,7 +77,6 @@ const Categories: React.FC = () => {
 
   const filteredCats = cats.filter(c => c.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  // Deep-Dive Overlay for Product Variants
   if (selectedProduct) {
     return (
       <div className="fixed inset-0 bg-white z-[200] flex flex-col animate-in slide-in-from-right duration-300 font-black">
@@ -135,8 +134,8 @@ const Categories: React.FC = () => {
         </header>
         <div className="p-6 grid grid-cols-2 gap-4 pb-32">
           {loading ? <div className="col-span-2 py-20 text-center"><Loader2 className="animate-spin mx-auto text-blue-600" size={32}/></div> : catProducts.length === 0 ? <p className="col-span-2 text-center text-gray-300 font-black italic py-20 uppercase tracking-[0.4em]">Zero Assets</p> : catProducts.map(p => (
-            <button key={p.id} onClick={() => setSelectedProduct(p)} className="bg-white p-4 rounded-[2.5rem] border-2 border-blue-600 shadow-sm flex flex-col text-left active:scale-[0.98] transition-all">
-               <div className="aspect-square bg-gray-50 rounded-[2rem] overflow-hidden mb-4 shadow-inner">
+            <button key={p.id} onClick={() => setSelectedProduct(p)} className="bg-white p-4 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col text-left active:scale-[0.98] transition-all">
+               <div className="aspect-square bg-gray-50 rounded-[1.5rem] overflow-hidden mb-4 shadow-inner">
                   <img src={p.image_url || 'https://via.placeholder.com/300'} className="w-full h-full object-cover"/>
                </div>
                <p className="text-[11px] font-black uppercase italic leading-tight truncate px-2">{p.name}</p>
@@ -153,48 +152,37 @@ const Categories: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-32 px-4 pt-2 font-black text-left">
-      <div className="flex bg-gray-900 p-2 rounded-[2.5rem] shadow-xl items-center gap-2">
-        <button onClick={() => { setActiveTab('Hardware'); setViewMode('VIEW'); }} className={`flex-1 py-4 rounded-[1.8rem] text-[10px] font-black uppercase tracking-widest transition-all italic ${activeTab === 'Hardware' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500'}`}>Hardware</button>
-        <button onClick={() => { setActiveTab('RCM'); setViewMode('VIEW'); }} className={`flex-1 py-4 rounded-[1.8rem] text-[10px] font-black uppercase tracking-widest transition-all italic ${activeTab === 'RCM' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500'}`}>RCM Distribution</button>
+      <div className="flex bg-gray-50 p-1.5 rounded-3xl items-center gap-1">
+        <button onClick={() => { setActiveTab('Hardware'); setViewMode('VIEW'); }} className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all italic ${activeTab === 'Hardware' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400'}`}>Hardware</button>
+        <button onClick={() => { setActiveTab('RCM'); setViewMode('VIEW'); }} className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all italic ${activeTab === 'RCM' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400'}`}>RCM Distribution</button>
       </div>
 
       <div className="relative group">
-        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-600 transition-colors" size={24} />
-        <input type="text" placeholder="Search Taxonomy..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-white border-none p-7 pl-16 rounded-[2.5rem] font-black uppercase italic outline-none shadow-sm focus:ring-4 focus:ring-blue-600/5 transition-all" />
+        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300" size={24} />
+        <input type="text" placeholder="Search Taxonomy..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-gray-50 p-6 pl-16 rounded-3xl font-black uppercase italic outline-none border-none shadow-inner" />
       </div>
 
-      <div className="flex bg-gray-100 p-2 rounded-[2.5rem] border border-gray-200">
-        <button onClick={() => { setViewMode('VIEW'); setIsEditing(false); setName(''); }} className={`flex-1 py-4 rounded-[1.8rem] text-[9px] font-black uppercase tracking-widest transition-all italic ${viewMode === 'VIEW' ? 'bg-white text-blue-600 shadow-sm border border-gray-100' : 'text-gray-400'}`}>VIEW REGISTRY</button>
-        <button onClick={() => setViewMode('ADD')} className={`flex-1 py-4 rounded-[1.8rem] text-[9px] font-black uppercase tracking-widest transition-all italic ${viewMode === 'ADD' ? 'bg-white text-blue-600 shadow-sm border border-gray-100' : 'text-gray-400'}`}>{isEditing ? 'REVISE' : 'ADD TAXONOMY'}</button>
+      <div className="flex bg-gray-50 p-1.5 rounded-3xl">
+        <button onClick={() => { setViewMode('VIEW'); setIsEditing(false); setName(''); }} className={`flex-1 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all italic ${viewMode === 'VIEW' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'}`}>VIEW REGISTRY</button>
+        <button onClick={() => setViewMode('ADD')} className={`flex-1 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all italic ${viewMode === 'ADD' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'}`}>{isEditing ? 'REVISE' : 'ADD NEW'}</button>
       </div>
 
       {viewMode === 'ADD' ? (
-        <div className="bg-white p-10 rounded-[3.5rem] border border-gray-100 shadow-xl space-y-8 animate-in slide-in-from-top-4 duration-300">
-           <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-400 italic ml-4 tracking-widest">{isEditing ? 'Revise' : 'Category'} Label</label>
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="ENTER LABEL..." className="w-full p-7 bg-gray-50 rounded-[2rem] font-black italic uppercase outline-none border-none text-lg shadow-inner" />
-           </div>
-           <div className="grid grid-cols-1 gap-3">
-              <button onClick={handleSave} className="w-full py-8 bg-blue-600 text-white rounded-[2.5rem] font-black uppercase italic tracking-[0.4em] shadow-2xl active:scale-95 transition-all">
-                {isEditing ? 'CONFIRM REVISION' : 'AUTHORIZE LOG'}
-              </button>
-              {isEditing && (
-                <button onClick={() => { setIsEditing(false); setViewMode('VIEW'); setName(''); }} className="w-full py-4 text-[10px] font-black uppercase text-gray-400">Cancel Revision</button>
-              )}
-           </div>
+        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-50 shadow-lg space-y-6 animate-in slide-in-from-top-4 duration-300">
+           <input value={name} onChange={e => setName(e.target.value)} placeholder="ENTER LABEL..." className="w-full p-6 bg-gray-50 rounded-2xl font-black italic uppercase outline-none border-none text-lg shadow-inner" />
+           <button onClick={handleSave} className="w-full py-6 bg-blue-600 text-white rounded-2xl font-black uppercase italic tracking-widest shadow-xl active:scale-95 transition-all">
+             {isEditing ? 'CONFIRM REVISION' : 'AUTHORIZE LOG'}
+           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.3em] ml-6 italic">Existing Nodes</h4>
+        <div className="grid grid-cols-1 gap-3">
           {filteredCats.map(c => (
-            <div key={c.id} className="w-full p-7 bg-white rounded-[2.5rem] border border-gray-100 flex items-center justify-between group active:scale-[0.98] transition-all shadow-sm">
-               <button onClick={() => { setSelectedCat(c); fetchProducts(c.id); }} className="flex-1 flex items-center gap-5 text-left">
-                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-all"><Tag size={22}/></div>
+            <div key={c.id} className="w-full p-5 bg-white rounded-2xl border border-gray-50 flex items-center justify-between group active:scale-[0.98] transition-all shadow-sm">
+               <button onClick={() => { setSelectedCat(c); fetchProducts(c.id); }} className="flex-1 flex items-center gap-4 text-left">
+                  <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><Tag size={18}/></div>
                   <span className="font-black italic uppercase text-sm tracking-tight text-gray-900">{c.name}</span>
                </button>
-               <div className="flex gap-2">
-                 <button onClick={(e) => openEdit(e, c)} className="p-4 text-blue-600 bg-blue-50 rounded-2xl active:scale-90 transition-all border border-blue-100"><Edit3 size={20}/></button>
-               </div>
+               <button onClick={(e) => openEdit(e, c)} className="p-3 text-blue-600 bg-blue-50 rounded-xl active:scale-90 border border-blue-50"><Edit3 size={18}/></button>
             </div>
           ))}
           {filteredCats.length === 0 && !loading && (
