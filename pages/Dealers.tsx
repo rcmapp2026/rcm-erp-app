@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
@@ -11,6 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import { useSuccess } from '../App';
 import { Dealer, Category } from '../types';
+import { PermissionHandler } from '../PermissionHandler';
 
 // Simplified Input Component - Single Clean Box, No Nested Borders
 const ModernInput = ({ label, value, onChange, placeholder, icon: Icon, disabled, type = "text" }: any) => (
@@ -142,6 +142,24 @@ const Dealers: React.FC = () => {
       if (mode === 'create') {
         const code = `RCM-${Math.floor(1000 + Math.random() * 9000)}`;
         response = await supabase.from('dealers').insert([{ ...payload, dealer_code: code }]).select().single();
+
+        // Automatic Notification logic for new dealer registration
+        if (!response.error && response.data) {
+          const newDealer = response.data;
+          const welcomeTitle = `🎊 WELCOME TO RCM DEALER APP: ${newDealer.shop_name} 🎊`;
+          const welcomeMsg = `🌟 HUGE CONGRATULATIONS TO ${newDealer.shop_name}! YOUR REGISTRATION IS SUCCESSFUL. WE ARE EXCITED TO EMPOWER YOUR BUSINESS WITH OUR DIGITAL ECOSYSTEM. LET'S GROW TOGETHER! 🚀🤝💼`;
+
+          await supabase.from('broadcasts').insert([{
+            title: welcomeTitle,
+            message: welcomeMsg,
+            target_type: 'dealer',
+            target_id: newDealer.id
+          }]);
+
+          // Optional: Send WhatsApp message as well
+          const waMsg = `*${welcomeTitle}*\n\n${welcomeMsg}\n\n— RCM ERP Admin`;
+          PermissionHandler.openWhatsApp(newDealer.mobile, waMsg);
+        }
       } else {
         response = await supabase.from('dealers').update(payload).eq('id', form.id).select().single();
       }
@@ -422,7 +440,7 @@ const Dealers: React.FC = () => {
                {categories.map(c => (
                  <button key={c.id} disabled={!isEditing} onClick={() => {
                     const current = form.category_access || [];
-                    const next = current.includes(c.id) ? current.filter((id:any)=>id!==c.id) : [...current, c.id];
+                    const next = current.includes(c.id) ? current.filter((id:any)=>id!==c.id) : [...current, id];
                     setForm({...form, category_access: next});
                  }} className={`px-5 py-3 rounded-xl text-[8px] font-black uppercase italic border border-gray-100 transition-all ${form.category_access?.includes(c.id) ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-gray-50 text-slate-400'}`}>
                     {c.name}

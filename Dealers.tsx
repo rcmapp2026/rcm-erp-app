@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabase';
 import { 
@@ -9,6 +8,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSuccess } from './App';
+import { PermissionHandler } from './PermissionHandler';
 
 const Dealers: React.FC = () => {
   const [dealers, setDealers] = useState<any[]>([]);
@@ -139,8 +139,26 @@ const Dealers: React.FC = () => {
         fetchData(true);
       } else {
         const code = `RCM-${Math.floor(1000 + Math.random() * 9000)}`;
-        const { error } = await supabase.from('dealers').insert([{ ...payload, dealer_code: code }]);
+        const { data: newDealer, error } = await supabase.from('dealers').insert([{ ...payload, dealer_code: code }]).select().single();
         if (error) throw error;
+
+        // Automatic Notification logic for new dealer registration
+        if (newDealer) {
+          const welcomeTitle = `🎊 WELCOME TO RCM NETWORK: ${newDealer.shop_name} 🎊`;
+          const welcomeMsg = `🌟 HUGE CONGRATULATIONS TO ${newDealer.shop_name}! YOUR REGISTRATION IS SUCCESSFUL. WE ARE EXCITED TO EMPOWER YOUR BUSINESS WITH OUR DIGITAL ECOSYSTEM. LET'S GROW TOGETHER! 🚀🤝💼`;
+
+          await supabase.from('broadcasts').insert([{
+            title: welcomeTitle,
+            message: welcomeMsg,
+            target_type: 'dealer',
+            target_id: newDealer.id
+          }]);
+
+          // Optional: Send WhatsApp message as well
+          const waMsg = `*${welcomeTitle}*\n\n${welcomeMsg}\n\n— RCM ERP Admin`;
+          PermissionHandler.openWhatsApp(newDealer.mobile, waMsg);
+        }
+
         setIsModalOpen(false);
         triggerSuccess({ 
           title: 'Success', 

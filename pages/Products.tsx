@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
 import { 
-  Plus, Loader2, X, Camera, Save, Search, Trash2, ArrowLeft, ChevronRight, ImageIcon, SaveAll
+  Plus, Loader2, X, Camera, Save, Search, Trash2, ArrowLeft, ChevronRight, ImageIcon, SaveAll, Circle, CheckCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSuccess } from '../App';
@@ -18,7 +18,8 @@ const Products: React.FC = () => {
   
   const [form, setForm] = useState<any>({ 
     id: '', name: '', sku: '', company_id: '', category_id: '', unit: 'PCS', image_url: '',
-    variants: [{ size: '', mrp: '', discount: '', final_price: '' }] 
+    variants: [{ size: '', mrp: '', discount: '', final_price: '' }],
+    stock_status: 'IN_STOCK'
   });
 
   const { triggerSuccess } = useSuccess();
@@ -31,7 +32,7 @@ const Products: React.FC = () => {
         supabase.from('categories').select('*').eq('type', activeTab).order('name'),
         supabase.from('companies').select('*').eq('type', activeTab).order('name')
       ]);
-      setProducts((pData.data || []).map((p: any) => ({ ...p, category_name: p.category?.name, company_name: p.company?.name })));
+      setProducts((pData.data || []).map((p: any) => ({ ...p, category_name: p.category?.name, company_name: p.company?.name, stock_status: p.stock_status || 'IN_STOCK' })));
       setCategories(cData.data || []);
       setCompanies(compData.data || []);
     } catch (e) { toast.error("Error"); }
@@ -74,7 +75,8 @@ const Products: React.FC = () => {
       const payload = { 
         name: form.name.toUpperCase(), sku: form.sku || generateSKU(activeTab), product_type: activeTab,
         company_id: form.company_id, category_id: form.category_id, unit: form.unit,
-        price: parseFloat(form.variants[0]?.final_price) || 0, image_url: form.image_url || 'https://via.placeholder.com/150'
+        price: parseFloat(form.variants[0]?.final_price) || 0, image_url: form.image_url || 'https://via.placeholder.com/150',
+        stock_status: form.stock_status
       };
       let pid = form.id;
       if (pid) await supabase.from('products').update(payload).eq('id', pid);
@@ -114,7 +116,7 @@ const Products: React.FC = () => {
           <input placeholder="SEARCH..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full h-14 !pl-12 border border-blue-100 rounded-xl bg-white text-blue-600" />
         </div>
 
-        <button onClick={() => { setForm({ id: '', name: '', sku: generateSKU(activeTab), company_id: '', category_id: '', unit: 'PCS', image_url: '', variants: [{ size: '', mrp: '', discount: '', final_price: '' }] }); setIsModalOpen(true); }} className="w-full py-4 bg-white text-blue-600 rounded-xl border border-blue-100 shadow-sm font-black flex items-center justify-center gap-3">
+        <button onClick={() => { setForm({ id: '', name: '', sku: generateSKU(activeTab), company_id: '', category_id: '', unit: 'PCS', image_url: '', variants: [{ size: '', mrp: '', discount: '', final_price: '' }], stock_status: 'IN_STOCK' }); setIsModalOpen(true); }} className="w-full py-4 bg-white text-blue-600 rounded-xl border border-blue-100 shadow-sm font-black flex items-center justify-center gap-3">
           <Plus size={24} /> NEW ASSET
         </button>
       </div>
@@ -122,7 +124,7 @@ const Products: React.FC = () => {
       <div className="flex-1 overflow-y-auto px-6 pb-32 no-scrollbar">
         <div className="grid grid-cols-1 gap-4">
           {loading ? <Loader2 className="animate-spin text-blue-600 mx-auto" /> : products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).map(p => (
-            <div key={p.id} onClick={() => { setForm({...p, variants: p.product_variants || []}); setIsModalOpen(true); }} className="bg-white p-4 rounded-3xl border border-blue-100 flex items-center gap-4 active:scale-[0.98] transition-all shadow-sm">
+            <div key={p.id} onClick={() => { setForm({...p, variants: p.product_variants || [], stock_status: p.stock_status || 'IN_STOCK'}); setIsModalOpen(true); }} className="bg-white p-4 rounded-3xl border border-blue-100 flex items-center gap-4 active:scale-[0.98] transition-all shadow-sm relative">
               <img src={p.image_url} className="w-32 aspect-[3/2] object-cover rounded-xl border border-blue-50 bg-slate-50" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-black italic uppercase truncate text-blue-600 leading-tight">{p.name}</p>
@@ -132,6 +134,11 @@ const Products: React.FC = () => {
                   <ChevronRight size={20} className="text-blue-600" />
                 </div>
               </div>
+               {p.stock_status === 'OUT_OF_STOCK' && (
+                <div className="absolute top-2 right-2 text-[8px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black uppercase italic">
+                    OUT OF STOCK
+                </div>
+            )}
             </div>
           ))}
         </div>
@@ -171,7 +178,7 @@ const Products: React.FC = () => {
                     <label className="text-[10px] font-black uppercase text-blue-600 opacity-50 ml-2">SKU Code</label>
                     <input placeholder="AUTO-GENERATED" value={form.sku} onChange={e => setForm({...form, sku: e.target.value.toUpperCase()})} className="border-blue-100 italic" />
                  </div>
-                 
+
                  <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-blue-600 opacity-50 ml-2">Brand</label>
                     <select value={form.company_id} onChange={e => setForm({...form, company_id: e.target.value})} className="border-blue-100 text-blue-600 font-black italic">
@@ -187,6 +194,13 @@ const Products: React.FC = () => {
                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                  </div>
+                 <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-blue-600 opacity-50 ml-2">Stock Status</label>
+                    <div className="flex bg-white p-1 rounded-2xl border border-blue-100 shadow-sm">
+                        <button onClick={() => setForm({...form, stock_status: 'IN_STOCK'})} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase italic flex items-center justify-center gap-2 ${form.stock_status === 'IN_STOCK' ? 'bg-green-600 text-white' : 'bg-white text-green-600'}`}><CheckCircle size={14} /> In Stock</button>
+                        <button onClick={() => setForm({...form, stock_status: 'OUT_OF_STOCK'})} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase italic flex items-center justify-center gap-2 ${form.stock_status === 'OUT_OF_STOCK' ? 'bg-red-600 text-white' : 'bg-white text-red-600'}`}><X size={14} /> Out of Stock</button>
+                    </div>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -216,7 +230,7 @@ const Products: React.FC = () => {
                  ))}
               </div>
            </div>
-           
+
            <div className="p-8 border-t border-blue-100 bg-white sticky bottom-0 rounded-t-[2rem] z-[820]">
               <button onClick={handleSave} className="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase italic shadow-lg flex items-center justify-center gap-3 border-none">
                 <SaveAll size={24}/> SAVE ASSET
