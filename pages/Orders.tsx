@@ -109,12 +109,12 @@ const Orders: React.FC = () => {
         }
       }
 
-      const shopName = selectedOrder.dealers?.shop_name || "VALUED DEALER";
+      const shopName = (selectedOrder.dealers?.shop_name || "VALUED DEALER").trim().toUpperCase();
       const orderNo = selectedOrder.order_no;
       const status = financials.status;
       const statusEmoji = status === 'Completed' ? '✅' : '⏳';
       
-      const waMsg = `📦 *ORDER UPDATE* 📦\n\nHello *${shopName.toUpperCase()}*,\n\nYour Order *#ORD-${orderNo}* status has been updated to: *${status}* ${statusEmoji}\n\n💰 *Total Amount:* ₹${Math.round(finalTotal).toLocaleString()}\n📍 *Status:* ${status.toUpperCase()} ${statusEmoji}\n\n_Thank you for choosing RCM Hardware_ 🙏`;
+      const waMsg = `📦 *ORDER UPDATE* 📦\n\nHello *${shopName}*,\n\nYour Order *#ORD-${orderNo}* status has been updated to: *${status}* ${statusEmoji}\n\n💰 *Total Amount:* ₹${Math.round(finalTotal).toLocaleString()}\n📍 *Status:* ${status.toUpperCase()} ${statusEmoji}\n\n_Thank you for choosing RCM Hardware_ 🙏`;
       
       PermissionHandler.openWhatsApp(selectedOrder.dealers?.mobile, waMsg);
 
@@ -184,7 +184,8 @@ const Orders: React.FC = () => {
       if (itemsError) throw itemsError;
 
       // New Order Notification
-      const waMsg = `📦 *ORDER REGISTERED* 📦\n\nHello *${selectedDealer.shop_name.toUpperCase()}*,\n\nYour new order manifest has been successfully registered.\n\n💰 *Estimated Total:* ₹${Math.round(subtotal).toLocaleString()}\n📍 *Status:* PENDING ⏳\n\n_Thank you for choosing RCM Hardware_ 🙏`;
+      const shopName = (selectedDealer.shop_name || "VALUED DEALER").trim().toUpperCase();
+      const waMsg = `📦 *ORDER REGISTERED* 📦\n\nHello *${shopName}*,\n\nYour new order manifest has been successfully registered.\n\n💰 *Estimated Total:* ₹${Math.round(subtotal).toLocaleString()}\n📍 *Status:* PENDING ⏳\n\n_Thank you for choosing RCM Hardware_ 🙏`;
       PermissionHandler.openWhatsApp(selectedDealer.mobile, waMsg);
 
       toast.success("Order Authorized Successfully ✅");

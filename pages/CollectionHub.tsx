@@ -74,7 +74,7 @@ const CollectionHub: React.FC = () => {
     const toastId = toast.loading("GENERATING REMINDER...");
     try {
       const amountStr = Math.abs(dealer.balance).toLocaleString('en-IN');
-      const shopName = dealer.shop_name.toUpperCase();
+      const shopName = (dealer.shop_name || '').trim().toUpperCase();
       const days = dealer.daysLeft; 
 
       const generatedImageData = await ImageGenerator.generateAlertCard({

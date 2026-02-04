@@ -135,7 +135,7 @@ const Ledger: React.FC = () => {
     const toastId = toast.loading("GENERATING REMINDER...");
     try {
       const amountStr = Math.abs(dealer.balance).toLocaleString('en-IN');
-      const shopName = dealer.shop_name.toUpperCase();
+      const shopName = (dealer.shop_name || '').trim().toUpperCase();
       const days = dealer.daysLeft;
 
       const generatedImageData = await ImageGenerator.generateAlertCard({
@@ -177,7 +177,8 @@ const Ledger: React.FC = () => {
 
       // Automated Update Notification
       const typeEmoji = txType === 'CREDIT' ? '📥' : '📤';
-      const updateText = `✅ *LEDGER UPDATED* ${typeEmoji}\n\nHello *${selectedDealer.shop_name.toUpperCase()}*,\n\nA new *${txType}* entry has been authorized in your account.\n\n📝 *Narration:* ${txForm.narration || 'Transaction'}\n💰 *Amount:* *₹${Number(txForm.amount).toLocaleString()}*\n📅 *Date:* ${txForm.date}\n\n_Your updated balance will reflect in the next statement. Thank you!_ 🙏\n\n_RCM Business Hub_`;
+      const shopName = (selectedDealer.shop_name || '').trim().toUpperCase();
+      const updateText = `✅ *LEDGER UPDATED* ${typeEmoji}\n\nHello *${shopName}*,\n\nA new *${txType}* entry has been authorized in your account.\n\n📝 *Narration:* ${txForm.narration || 'Transaction'}\n💰 *Amount:* *₹${Number(txForm.amount).toLocaleString()}*\n📅 *Date:* ${txForm.date}\n\n_Your updated balance will reflect in the next statement. Thank you!_ 🙏\n\n_RCM Business Hub_`;
 
       PermissionHandler.openWhatsApp(selectedDealer.mobile, updateText);
 
