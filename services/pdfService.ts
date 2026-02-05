@@ -36,7 +36,7 @@ export const PdfTemplates = {
 
         .pdf-page {
           width: 210mm;
-          min-height: 295mm; /* Reduced to prevent blank pages on mobile */
+          min-height: 296mm;
           padding: 12mm 10mm;
           position: relative;
           box-sizing: border-box;
@@ -68,7 +68,7 @@ export const PdfTemplates = {
           color: #fff !important;
           font-weight: 900 !important;
           text-transform: uppercase;
-          font-size: 9px; /* Unified font size */
+          font-size: 9px;
           padding: 9px 7px;
           border: 1px solid #CDA434;
           text-align: center;
@@ -77,7 +77,7 @@ export const PdfTemplates = {
         td {
           border: 1px solid #CDA434;
           padding: 7px 9px;
-          font-size: 9px; /* Unified font size */
+          font-size: 9px;
           vertical-align: middle;
           word-wrap: break-word;
           overflow-wrap: break-word;
@@ -144,44 +144,48 @@ export const PdfTemplates = {
   `,
 
   generateCertificateHtml: (dealer: Dealer) => `
-    <div class="pdf-page">
-      <div class="cert-container" style="width: 100%; height: 100%; border: 15px solid #000; outline: 3px solid #CDA434; outline-offset: -25px; padding: 20px; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; align-items: center; position: relative;">
-        <div style="width: 100%; height: 100%; border: 2px solid #CDA434; padding: 40px 40px; display: flex; flex-direction: column; align-items: center; position: relative;">
+    <div class="pdf-page" style="min-height: 297mm; height: 297mm; overflow: hidden; padding: 0; page-break-after: avoid !important; margin: 0;">
+      <div class="cert-container" style="width: 210mm; height: 297mm; border: 15px solid #000; outline: 3px solid #CDA434; outline-offset: -25px; padding: 25px; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; align-items: center; position: relative;">
+        <div style="width: 100%; height: 100%; border: 2px solid #CDA434; padding: 40px 40px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden;">
           <div style="text-align: center; margin-bottom: 20px;">
              <div class="rcm-logo" style="font-size: 40px;"><span class="rcm-r">R</span><span class="rcm-c">C</span><span class="rcm-m">M</span></div>
              <div class="title-3d" style="margin-top: 10px; font-size: 34px;">R.C.M. HARDWARE</div>
           </div>
           <div style="font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 900; color: #000; text-transform: uppercase; letter-spacing: 4px; margin: 15px 0; text-align: center;">Certificate of Dealership</div>
           <p style="font-size: 13px; font-weight: 900; color: #666; margin-top: 10px; text-transform: uppercase; text-align: center;">This official document certifies that</p>
-          <h2 style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 900; color: #CDA434; margin: 15px 0; text-transform: uppercase; border-bottom: 6px double #CDA434; width: 90%; text-align: center; padding-bottom: 5px;">${dealer.shop_name}</h2>
+
+          <div style="width: 90%; border-bottom: 6px double #CDA434; margin: 15px 0; padding-bottom: 5px; text-align: center;">
+             <h2 style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; color: #CDA434; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;">${dealer.shop_name}</h2>
+          </div>
+
           <p style="font-size: 11px; font-weight: 900; color: #444; margin-bottom: 30px; font-style: italic; text-align: center; max-width: 550px; line-height: 1.6;">Is officially registered and authorized to represent, distribute, and serve as a business hub for R.C.M. Hardware products.</p>
 
           <div style="width: 100%; max-width: 650px; border: 2.5px solid #CDA434; padding: 35px 40px 25px 40px; position: relative; background: #fff;">
              <div class="verified-stamp">VERIFIED BY<br/>RCM HARDWARE</div>
-             <div style="display: flex; flex-direction: column; gap: 12px; width: 70%;">
-                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Shop Name</span>
-                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; text-transform: uppercase;">${dealer.shop_name}</span>
+             <div style="display: flex; flex-direction: column; gap: 12px; width: 85%;">
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px; align-items: baseline;">
+                   <span style="width: 140px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase; flex-shrink: 0;">Shop Name</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">${dealer.shop_name}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Proprietor</span>
-                   <span style="font-weight: 900; font-size: 13px; color: #0F172A;">${dealer.owner_name}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px; align-items: baseline;">
+                   <span style="width: 140px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase; flex-shrink: 0;">Proprietor</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">${dealer.owner_name}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Mobile</span>
-                   <span style="font-weight: 900; font-size: 13px; color: #0F172A;">+91 ${dealer.mobile}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px; align-items: baseline;">
+                   <span style="width: 140px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase; flex-shrink: 0;">Mobile</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; white-space: nowrap; flex: 1;">+91 ${dealer.mobile}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">City</span>
-                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; text-transform: uppercase;">${dealer.city || 'N/A'}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px; align-items: baseline;">
+                   <span style="width: 140px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase; flex-shrink: 0;">City</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">${dealer.city || 'N/A'}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5 solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registry No.</span>
-                   <span style="font-weight: 900; font-size: 13px; color: #0F172A;">${dealer.dealer_code || 'REG-PENDING'}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px; align-items: baseline;">
+                   <span style="width: 140px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase; flex-shrink: 0;">Registry No.</span>
+                   <span style="font-weight: 900; font-size: 13px; color: #0F172A; white-space: nowrap; flex: 1;">${dealer.dealer_code || 'REG-PENDING'}</span>
                 </div>
-                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px;">
-                   <span style="width: 160px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase;">Registered Address</span>
-                   <span style="font-weight: 900; font-size: 12px; color: #0F172A; line-height: 1.2;">${dealer.address}, ${dealer.city} - ${dealer.pincode}</span>
+                <div style="display: flex; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 6px; align-items: baseline;">
+                   <span style="width: 140px; font-size: 10px; font-weight: 900; color: #94A3B8; text-transform: uppercase; flex-shrink: 0;">Registered Address</span>
+                   <span style="font-weight: 900; font-size: 11px; color: #0F172A; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">${dealer.address}, ${dealer.city} - ${dealer.pincode}</span>
                 </div>
              </div>
           </div>

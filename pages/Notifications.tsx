@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Send, Loader2, Search, X, Users, User, BellRing, History, ShieldAlert, Trash2 } from 'lucide-react';
+import { Send, Loader2, Search, X, Users, User, BellRing, History, ShieldAlert, Trash2, Edit2 } from 'lucide-react';
 import { supabase } from '../supabase';
 import { PermissionHandler } from '../PermissionHandler';
 import toast from 'react-hot-toast';
@@ -13,6 +13,8 @@ const Notifications: React.FC = () => {
   const [targetType, setTargetType] = useState<'all' | 'dealer'>('all');
   const [selectedDealerId, setSelectedDealerId] = useState('');
   const [form, setForm] = useState({ title: '', message: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [dealerSearch, setDealerSearch] = useState('');
 
   const fetchHistory = useCallback(async () => {
     setLoading(true);
@@ -54,7 +56,7 @@ const Notifications: React.FC = () => {
     if (targetType === 'dealer' && !selectedDealerId) return toast.error("SELECT TARGET DEALER HUB");
     
     setSending(true);
-    const loadingToast = toast.loading("TRANSMITTING BROADCAST...");
+    const loadingToast = toast.loading(editingId ? "UPDATING BROADCAST..." : "TRANSMITTING BROADCAST...");
     
     try {
       const payload = { 
@@ -64,9 +66,13 @@ const Notifications: React.FC = () => {
         target_id: targetType === 'dealer' ? selectedDealerId : null 
       };
 
-      const { error } = await supabase.from('broadcasts').insert([payload]);
-      
-      if (error) throw error;
+      if (editingId) {
+        const { error } = await supabase.from('broadcasts').update(payload).eq('id', editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('broadcasts').insert([payload]);
+        if (error) throw error;
+      }
       
       if (targetType === 'dealer') {
         const dealer = dealers.find(d => d.id === selectedDealerId);
@@ -78,8 +84,9 @@ const Notifications: React.FC = () => {
 
       setForm({ title: '', message: '' });
       setSelectedDealerId('');
+      setEditingId(null);
       toast.dismiss(loadingToast);
-      toast.success(targetType === 'all' ? "GLOBAL BROADCAST AUTHORIZED" : "NODE DISPATCH SUCCESSFUL");
+      toast.success(editingId ? "BROADCAST UPDATED" : (targetType === 'all' ? "GLOBAL BROADCAST AUTHORIZED" : "NODE DISPATCH SUCCESSFUL"));
       fetchHistory();
     } catch (e: any) { 
       toast.dismiss(loadingToast);
@@ -87,6 +94,14 @@ const Notifications: React.FC = () => {
     } finally { 
       setSending(false); 
     }
+  };
+
+  const handleEdit = (item: any) => {
+    setEditingId(item.id);
+    setForm({ title: item.title, message: item.message });
+    setTargetType(item.target_type);
+    setSelectedDealerId(item.target_id || '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const deleteLog = async (id: string) => {
@@ -105,11 +120,27 @@ const Notifications: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500 pb-32 px-5 pt-4 font-black text-left bg-white min-h-full">
       {/* Broadcast Control Module */}
       <div className="bg-white p-8 rounded-[3rem] border-2 border-blue-600 shadow-2xl space-y-6 relative overflow-hidden">
-        <div className="flex items-center gap-3">
-           <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-              <BellRing size={20} strokeWidth={3}/>
+        <div className="flex items-center justify-between">
+           <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                 <BellRing size={20} strokeWidth={3}/>
+              </div>
+              <h3 className="text-sm font-black uppercase text-gray-900 italic tracking-widest">
+                {editingId ? 'Edit Broadcast' : 'Broadcast Command'}
+              </h3>
            </div>
-           <h3 className="text-sm font-black uppercase text-gray-900 italic tracking-widest">Broadcast Command</h3>
+           {editingId && (
+             <button
+               onClick={() => {
+                 setEditingId(null);
+                 setForm({ title: '', message: '' });
+                 setSelectedDealerId('');
+               }}
+               className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+             >
+                <X size={20}/>
+             </button>
+           )}
         </div>
         
         <div className="space-y-4">
@@ -147,14 +178,27 @@ const Notifications: React.FC = () => {
         </div>
 
         {targetType === 'dealer' && (
-          <div className="animate-in slide-in-from-top duration-300">
+          <div className="animate-in slide-in-from-top duration-300 space-y-2">
+             <div className="relative">
+                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 pointer-events-none"/>
+                <input
+                  type="text"
+                  placeholder="SEARCH DEALER NAME..."
+                  value={dealerSearch}
+                  onChange={e => setDealerSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-blue-50 border-blue-200 border-2 font-black italic uppercase text-[10px] rounded-xl text-blue-900 placeholder:text-blue-300 focus:outline-none"
+                />
+             </div>
              <select 
                value={selectedDealerId} 
                onChange={e => setSelectedDealerId(e.target.value)} 
                className="w-full !p-4 bg-blue-50 border-blue-200 border-2 font-black italic uppercase text-xs rounded-xl text-blue-900"
              >
                 <option value="">CHOOSE TARGETED HUB...</option>
-                {dealers.map(d => <option key={d.id} value={d.id}>{d.shop_name} ({d.dealer_code})</option>)}
+                {dealers
+                  .filter(d => d.shop_name.toLowerCase().includes(dealerSearch.toLowerCase()))
+                  .map(d => <option key={d.id} value={d.id}>{d.shop_name}</option>)
+                }
              </select>
           </div>
         )}
@@ -165,7 +209,7 @@ const Notifications: React.FC = () => {
           className="w-full bg-black text-white p-6 rounded-[2rem] font-black uppercase italic shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all hover:bg-blue-600 group"
         >
           {sending ? <Loader2 className="animate-spin"/> : <Send size={22} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"/>} 
-          {targetType === 'all' ? 'AUTHORIZE GLOBAL DISPATCH' : 'DISPATCH TO NODE'}
+          {editingId ? 'UPDATE BROADCAST' : (targetType === 'all' ? 'AUTHORIZE GLOBAL DISPATCH' : 'DISPATCH TO NODE')}
         </button>
       </div>
 
@@ -188,10 +232,13 @@ const Notifications: React.FC = () => {
                        <h5 className="text-xs font-black text-black uppercase italic truncate">{item.title}</h5>
                        <p className="text-[8px] text-gray-300 font-black uppercase italic">{new Date(item.created_at).toLocaleString('en-GB')}</p>
                     </div>
-                    <div className="flex-shrink-0 flex items-center gap-2">
+                    <div className="flex-shrink-0 flex items-center gap-1">
                        <span className={`text-[8px] px-3 py-1 rounded-full font-black uppercase italic truncate max-w-[100px] ${item.target_type === 'all' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
                          {item.target_type === 'all' ? 'GLOBAL' : (item.dealer?.shop_name || 'NODE')}
                        </span>
+                       <button onClick={() => handleEdit(item)} className="p-2 text-slate-200 hover:text-blue-600 transition-colors">
+                          <Edit2 size={16}/>
+                       </button>
                        <button onClick={() => deleteLog(item.id)} className="p-2 text-slate-200 hover:text-red-600 transition-colors">
                           <Trash2 size={16}/>
                        </button>
