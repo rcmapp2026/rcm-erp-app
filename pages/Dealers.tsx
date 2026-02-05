@@ -123,7 +123,11 @@ const Dealers: React.FC = () => {
 
       // Automatic WhatsApp Notification for Activation/Verification
       if (newStatus === 'Active') {
-        const waMsg = `🎊 *ACCOUNT ACTIVATED & VERIFIED* 🎊\n\nDear *${updated.shop_name}*,\n\nYour RCM Dealer account is now *OFFICIALLY VERIFIED*! ✅\n\n🆔 *ID:* ${updated.dealer_code}\n🔑 *Password:* ${updated.mobile}\n\nYou can now login and access the app. 🚀🤝\n\n— *RCM ERP Admin*`;
+        const cleanShop = updated.shop_name?.trim();
+        const cleanCode = updated.dealer_code?.trim();
+        const cleanMobile = updated.mobile?.trim();
+
+        const waMsg = `🎊 *ACCOUNT ACTIVATED & VERIFIED* 🎊\n\nDear *${cleanShop}*,\n\nYour RCM Dealer account is now *OFFICIALLY VERIFIED*! ✅\n\n🆔 *ID:* ${cleanCode}\n🔑 *Password:* ${cleanMobile}\n\nYou can now login and access the app. 🚀🤝\n\n— *RCM ERP Admin*`;
         PermissionHandler.openWhatsApp(updated.mobile, waMsg);
       }
 
@@ -141,30 +145,29 @@ const Dealers: React.FC = () => {
       const payload = { ...form };
       delete payload.id;
       delete payload.created_at;
-      payload.shop_name = payload.shop_name.toUpperCase();
-      payload.owner_name = (payload.owner_name || '').toUpperCase();
-      payload.city = (payload.city || '').toUpperCase();
+      payload.shop_name = payload.shop_name.toUpperCase().trim();
+      payload.owner_name = (payload.owner_name || '').toUpperCase().trim();
+      payload.city = (payload.city || '').toUpperCase().trim();
 
       let response;
       if (mode === 'create') {
         const code = `RCM-${Math.floor(1000 + Math.random() * 9000)}`;
         response = await supabase.from('dealers').insert([{ ...payload, dealer_code: code }]).select().single();
-        // No auto-WhatsApp on creation (as per user request)
       } else {
-        // Detect payment block change
         const wasBlocked = activeRecord?.payment_block;
         const isBlocked = form.payment_block;
 
         response = await supabase.from('dealers').update(payload).eq('id', form.id).select().single();
 
-        // Automatic WhatsApp Notification for Payment Hold/Release
         if (!response.error && response.data && wasBlocked !== isBlocked) {
           const updatedDealer = response.data;
+          const cleanShop = updatedDealer.shop_name?.trim();
           let waMsg = '';
+
           if (isBlocked) {
-            waMsg = `⚠️ *ACCOUNT ON HOLD* ⚠️\n\nDear *${updatedDealer.shop_name}*,\n\nYour app is *currently close* 🔒. Please *clr your dues balance* then access the app. ⏳\n\n— *RCM ERP Admin*`;
+            waMsg = `⚠️ *ACCOUNT ON HOLD* ⚠️\n\nDear *${cleanShop}*,\n\nYour app is *currently close* 🔒. Please *clr your dues balance* then access the app. ⏳\n\n— *RCM ERP Admin*`;
           } else {
-            waMsg = `✅ *PAYMENT RELEASED* ✅\n\nGreat news! The financial hold for *${updatedDealer.shop_name}* has been *RELEASED* 🔓.\n\n📦 *Status:* CLEAR FOR DISPATCH\n\nThank you for your cooperation! 🚀\n\n— *RCM ERP Admin*`;
+            waMsg = `✅ *PAYMENT RELEASED* ✅\n\nGreat news! The financial hold for *${cleanShop}* has been *RELEASED* 🔓.\n\n📦 *Status:* CLEAR FOR DISPATCH\n\nThank you for your cooperation! 🚀\n\n— *RCM ERP Admin*`;
           }
           PermissionHandler.openWhatsApp(updatedDealer.mobile, waMsg);
         }
