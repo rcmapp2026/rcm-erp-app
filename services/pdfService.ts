@@ -155,7 +155,7 @@ export const PdfTemplates = {
           <p style="font-size: 13px; font-weight: 900; color: #666; margin-top: 10px; text-transform: uppercase; text-align: center;">This official document certifies that</p>
 
           <div style="width: 90%; border-bottom: 6px double #CDA434; margin: 15px 0; padding-bottom: 5px; text-align: center;">
-             <h2 style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; color: #CDA434; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;">${dealer.shop_name}</h2>
+             <h2 style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; color: #2563EB; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;">${dealer.shop_name}</h2>
           </div>
 
           <p style="font-size: 11px; font-weight: 900; color: #444; margin-bottom: 30px; font-style: italic; text-align: center; max-width: 550px; line-height: 1.6;">Is officially registered and authorized to represent, distribute, and serve as a business hub for R.C.M. Hardware products.</p>
