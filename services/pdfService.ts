@@ -144,8 +144,8 @@ export const PdfTemplates = {
   `,
 
   generateCertificateHtml: (dealer: Dealer) => `
-    <div class="pdf-page" style="min-height: 297mm; height: 297mm; overflow: hidden; padding: 0; page-break-after: avoid !important; margin: 0;">
-      <div class="cert-container" style="width: 210mm; height: 297mm; border: 15px solid #000; outline: 3px solid #CDA434; outline-offset: -25px; padding: 25px; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; align-items: center; position: relative;">
+    <div class="pdf-page" style="height: 296mm; overflow: hidden; padding: 0; page-break-after: avoid !important; margin: 0;">
+      <div class="cert-container" style="width: 210mm; height: 296mm; border: 15px solid #000; outline: 3px solid #CDA434; outline-offset: -25px; padding: 25px; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; align-items: center; position: relative;">
         <div style="width: 100%; height: 100%; border: 2px solid #CDA434; padding: 40px 40px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden;">
           <div style="text-align: center; margin-bottom: 20px;">
              <div class="rcm-logo" style="font-size: 40px;"><span class="rcm-r">R</span><span class="rcm-c">C</span><span class="rcm-m">M</span></div>
