@@ -120,6 +120,13 @@ const Dealers: React.FC = () => {
       setActiveRecord(updated);
       setForm(updated);
       await fetchData(true);
+
+      // Automatic WhatsApp Notification for Activation/Verification
+      if (newStatus === 'Active') {
+        const waMsg = `🎊 *ACCOUNT ACTIVATED & VERIFIED* 🎊\n\nDear *${updated.shop_name}*,\n\nYour RCM Dealer account is now *OFFICIALLY VERIFIED*! ✅\n\n🆔 *ID:* ${updated.dealer_code}\n🔑 *Password:* ${updated.mobile}\n\nYou can now login and access the app. 🚀🤝\n\n— *RCM ERP Admin*`;
+        PermissionHandler.openWhatsApp(updated.mobile, waMsg);
+      }
+
       toast.success(`NODE ${newStatus.toUpperCase()} ARCHIVED`);
     } catch (e) { toast.error("SYNC REJECTED"); }
     finally { setLoading(false); }
@@ -142,26 +149,25 @@ const Dealers: React.FC = () => {
       if (mode === 'create') {
         const code = `RCM-${Math.floor(1000 + Math.random() * 9000)}`;
         response = await supabase.from('dealers').insert([{ ...payload, dealer_code: code }]).select().single();
-
-        // Automatic Notification logic for new dealer registration
-        if (!response.error && response.data) {
-          const newDealer = response.data;
-          const welcomeTitle = `🎊 WELCOME TO RCM DEALER APP: ${newDealer.shop_name} 🎊`;
-          const welcomeMsg = `🌟 HUGE CONGRATULATIONS TO ${newDealer.shop_name}! YOUR REGISTRATION IS SUCCESSFUL. WE ARE EXCITED TO EMPOWER YOUR BUSINESS WITH OUR DIGITAL ECOSYSTEM. LET'S GROW TOGETHER! 🚀🤝💼`;
-
-          await supabase.from('broadcasts').insert([{
-            title: welcomeTitle,
-            message: welcomeMsg,
-            target_type: 'dealer',
-            target_id: newDealer.id
-          }]);
-
-          // Optional: Send WhatsApp message as well
-          const waMsg = `*${welcomeTitle}*\n\n${welcomeMsg}\n\n— RCM ERP Admin`;
-          PermissionHandler.openWhatsApp(newDealer.mobile, waMsg);
-        }
+        // No auto-WhatsApp on creation (as per user request)
       } else {
+        // Detect payment block change
+        const wasBlocked = activeRecord?.payment_block;
+        const isBlocked = form.payment_block;
+
         response = await supabase.from('dealers').update(payload).eq('id', form.id).select().single();
+
+        // Automatic WhatsApp Notification for Payment Hold/Release
+        if (!response.error && response.data && wasBlocked !== isBlocked) {
+          const updatedDealer = response.data;
+          let waMsg = '';
+          if (isBlocked) {
+            waMsg = `⚠️ *ACCOUNT ON HOLD* ⚠️\n\nDear *${updatedDealer.shop_name}*,\n\nYour app is *currently close* 🔒. Please *clr your dues balance* then access the app. ⏳\n\n— *RCM ERP Admin*`;
+          } else {
+            waMsg = `✅ *PAYMENT RELEASED* ✅\n\nGreat news! The financial hold for *${updatedDealer.shop_name}* has been *RELEASED* 🔓.\n\n📦 *Status:* CLEAR FOR DISPATCH\n\nThank you for your cooperation! 🚀\n\n— *RCM ERP Admin*`;
+          }
+          PermissionHandler.openWhatsApp(updatedDealer.mobile, waMsg);
+        }
       }
 
       if (response.error) throw response.error;
@@ -300,7 +306,7 @@ const Dealers: React.FC = () => {
         </div>
 
         {/* HUB PROFILE SECTION */}
-        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 space-y-8">
+        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-8">
             <div className="flex flex-col items-center gap-6">
                 <div className="relative group">
                     <img
