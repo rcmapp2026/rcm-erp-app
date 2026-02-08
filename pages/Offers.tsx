@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Gift, Plus, Loader2, X, Search, ImageIcon, Sparkles, ArrowLeft, Save, Edit3 } from 'lucide-react';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
+import { FileUtils } from '../utils/fileUtils';
 
 const Offers: React.FC = () => {
   const [offers, setOffers] = useState<any[]>([]);
@@ -73,8 +74,9 @@ const Offers: React.FC = () => {
     if (!file) return;
     setUploading(true);
     try {
-      const path = `offers/off-${Date.now()}.png`;
-      const { error } = await supabase.storage.from('products').upload(path, file);
+      const compressedFile = await FileUtils.compressImage(file);
+      const path = `offers/off-${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from('products').upload(path, compressedFile);
       if (error) throw error;
       const { data } = supabase.storage.from('products').getPublicUrl(path);
       setForm({...form, image_url: data.publicUrl});

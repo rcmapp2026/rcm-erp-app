@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { useSuccess } from '../App';
 import { Dealer, Category } from '../types';
 import { PermissionHandler } from '../PermissionHandler';
+import { FileUtils } from '../utils/fileUtils';
 
 // Simplified Input Component - Single Clean Box, No Nested Borders
 const ModernInput = ({ label, value, onChange, placeholder, icon: Icon, disabled, type = "text" }: any) => (
@@ -309,7 +310,7 @@ const Dealers: React.FC = () => {
         </div>
 
         {/* HUB PROFILE SECTION */}
-        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-8">
+        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 space-y-8">
             <div className="flex flex-col items-center gap-6">
                 <div className="relative group">
                     <img
@@ -321,8 +322,9 @@ const Dealers: React.FC = () => {
                         <label className="absolute bottom-0 right-0 p-3 bg-blue-600 text-white rounded-full shadow-lg cursor-pointer active:scale-90 border-2 border-white"><Camera size={18} strokeWidth={3}/><input type="file" className="hidden" onChange={async (e) => {
                             const file = e.target.files?.[0]; if(!file) return; setUploading(true);
                             try {
-                              const path = `dealers/p-${Date.now()}.png`;
-                              await supabase.storage.from('products').upload(path, file);
+                              const compressedFile = await FileUtils.compressImage(file);
+                              const path = `dealers/p-${Date.now()}.jpg`;
+                              await supabase.storage.from('products').upload(path, compressedFile);
                               const { data } = supabase.storage.from('products').getPublicUrl(path);
                               setForm({...form, profile_img: data.publicUrl});
                               toast.success("PROFILE UPDATED");
@@ -421,8 +423,9 @@ const Dealers: React.FC = () => {
                     <input type="file" className="hidden" onChange={async (e) => {
                       const file = e.target.files?.[0]; if(!file) return; setUploading(true);
                       try {
-                        const path = `dealers/ch-${Date.now()}.png`;
-                        await supabase.storage.from('products').upload(path, file);
+                        const compressedFile = await FileUtils.compressImage(file);
+                        const path = `dealers/ch-${Date.now()}.jpg`;
+                        await supabase.storage.from('products').upload(path, compressedFile);
                         const { data } = supabase.storage.from('products').getPublicUrl(path);
                         setForm({...form, cheques_img_urls: [...(form.cheques_img_urls||[]), data.publicUrl]});
                         toast.success("ARTIFACT ARCHIVED");

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSuccess } from '../App';
+import { FileUtils } from '../utils/fileUtils';
 
 const Products: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'Hardware' | 'RCM'>('Hardware');
@@ -178,10 +179,14 @@ const Products: React.FC = () => {
                     {form.image_url ? <img src={form.image_url} className="w-full h-full object-cover" /> : <ImageIcon size={40} className="text-blue-100" />}
                     <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async (e) => {
                       const file = e.target.files?.[0]; if (!file) return; setUploading(true);
-                      const path = `products/p-${Date.now()}.png`;
-                      await supabase.storage.from('products').upload(path, file);
-                      const { data } = supabase.storage.from('products').getPublicUrl(path);
-                      setForm({...form, image_url: data.publicUrl}); setUploading(false);
+                      try {
+                        const compressedFile = await FileUtils.compressImage(file);
+                        const path = `products/p-${Date.now()}.jpg`;
+                        await supabase.storage.from('products').upload(path, compressedFile);
+                        const { data } = supabase.storage.from('products').getPublicUrl(path);
+                        setForm({...form, image_url: data.publicUrl});
+                      } catch (err) { toast.error("UPLOAD FAIL"); }
+                      finally { setUploading(false); }
                     }} />
                     {uploading && <div className="absolute inset-0 bg-white/80 z-20 flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}
                  </div>

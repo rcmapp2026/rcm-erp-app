@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { PermissionHandler } from '../PermissionHandler';
 import { useSuccess } from '../App';
 import { ImageGenerator } from '../services/ImageGenerator';
+import { FileUtils } from '../utils/fileUtils';
 
 // Helper to convert base64 to Blob
 const base64toBlob = (base64Data: string, mimeType: string): Blob => {
@@ -118,8 +119,9 @@ const Ledger: React.FC = () => {
       const urls = [...(txForm.images || [])];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const path = `ledger/tx-${Date.now()}-${ i}.png`;
-        await supabase.storage.from('products').upload(path, file);
+        const compressedFile = await FileUtils.compressImage(file);
+        const path = `ledger/tx-${Date.now()}-${ i}.jpg`;
+        await supabase.storage.from('products').upload(path, compressedFile);
         const { data } = supabase.storage.from('products').getPublicUrl(path);
         urls.push(data.publicUrl);
       }
@@ -337,7 +339,7 @@ const Ledger: React.FC = () => {
                 <button onClick={async () => {
                   setIsSpoolingCard(true);
                   const amountStr = Math.abs(selectedDealer.balance).toLocaleString();
-                  const img = await ImageGenerator.generateAlertCard({ shopName: selectedDealer.shop_name, amount: amountStr, days: 15, mode: designerMode, profileName: profile?.name || 'RCM ERP' });
+                  const img = await ImageGenerator.generateAlertCard({ shopName: selectedDealer.shop_name, amount: amountStr, days: selectedDealer.daysLeft, mode: designerMode, profileName: profile?.name || 'RCM ERP' });
                   setCardPreview(img);
                   setIsSpoolingCard(false);
                 }} disabled={isSpoolingCard} className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase italic border-none flex items-center justify-center">
